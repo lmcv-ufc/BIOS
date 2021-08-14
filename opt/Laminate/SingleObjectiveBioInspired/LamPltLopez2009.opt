@@ -1,0 +1,65 @@
+%HEADER
+Weight minimization of a laminated square plate subjected 
+to biaxial and shear loading. Safety factor using Tsai-Wu 
+failure criterion is used. The PSO algorithm with square 
+swarm topology, and layer addition and deletion operators 
+is used [1].
+
+One optimum solution:
+{x} = [(±45º)2 (90º)2 (±45º)11 (0º)2 (±45º)2 (0º)2 (±45º)]s 
+weight = 199.662
+Sf     =  1.0
+
+Refs:
+
+[1] Barroso, E. S.; Parente Jr., E.; Melo, A. M. C. A hybrid 
+PSO-GA algorithm for optimization of laminated composites. Structural 
+and Multidisciplinary Optimization. 2017.
+ 
+[2] Lopez R, Luersen M, Cursi E. Optimization of laminated composites 
+considering different failure criteria. Compos Part B Eng
+40(8):731–740. 2009.
+
+%OPTIMIZATION.ALGORITHM
+'LamPSO'
+ 
+%INDIVIDUAL.TYPE
+'IntegerMatrix'
+
+%OPTIMIZATION.NUMBER
+100
+
+%MAXIMUM.ITERATIONS
+65
+
+%SWARM.SIZE
+24
+
+%CONSTRAINT.TOLERANCE
+1.0e-5
+
+%PROBLEM.TYPE
+'LamPltMinLopez2009'
+
+%PENALTY.METHOD
+'Deb2000'
+
+%SWARM.TOPOLOGY
+'Square'
+
+%PARTICLE.INERTIA
+'CONSTANT' 0.36
+
+%COGNITIVE.FACTOR
+'CONSTANT' 2.43
+
+%SOCIAL.FACTOR
+'CONSTANT' 0.69
+
+%LAYERADD.PROBABILITY
+0.04
+
+%LAYERDEL.PROBABILITY
+0.04
+
+%END

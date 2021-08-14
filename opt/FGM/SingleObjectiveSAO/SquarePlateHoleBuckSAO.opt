@@ -1,0 +1,154 @@
+%HEADER
+Maximization of the critical buckling load of a FG square plate with a hole
+in its center, under ceramic volume fraction and mass-related constraints.
+This problem is described and solved in Ribeiro et al. [1] using a
+RBF-based SAO, and in Maia et al. [2] using a KRG-based SAO.
+
+This problem has 6 variables, and 2 cheap constraint.
+The global optimum is found at:
+{x} = {0.0378, 1.0, 1.0, 1.0, 0.0, 0.0}
+f(x) = -247317
+
+Refs:
+
+[1] Ribeiro, L. G.; Maia, M. A.; Parente Jr., E.; Melo, A. M. C. Surrogate based 
+    optimization of functionally graded plates using radial basis functions. Composite
+    structures, v. 252, 2020.
+
+[2] Maia, M. A.; Parente Jr., E.; Melo, A. M. C. Kriging-based optimization of
+    functionally graded structures. Structural and Multidisciplinary Optimization. 
+    2021.
+
+--------------------------OPTIMIZATION.PARAMETERS---------------------------
+
+%OPTIMIZATION.ALGORITHM
+'SAOKRG'
+'SAORBF'
+
+%OPTIMIZATION.NUMBER
+1
+ 
+%MAXIMUM.GENERATIONS
+100
+
+%MAXIMUM.NUMBER.OF.POINTS
+100
+ 
+%MIGRATION.GENERATION.GAP
+10
+
+%MIGRATION.INDIVIDUAL.NUMBER
+1
+
+%MAXIMUM.THREAD.NUMBER
+1
+
+%STALL.GEN
+20
+
+------------------------------PROBLEM.PARAMETERS-----------------------------
+ 
+%INDIVIDUAL.TYPE
+'DoubleVector'
+'IntegerVector'
+
+%PROBLEM.TYPE
+'SquarePlateHoleBuckFGM'
+
+%%MINIMUM.OBJECTIVE.FUNCTION
+7.45728E+09
+
+---------------------------SAMPLING.PARAMETERS-----------------------------
+
+%SAMPLING.METHOD
+'NLHS'
+'LHS'
+'HAMMERSLEY'
+'RANDOM'
+'SOBOL'
+'CVT'
+'LCVT'
+
+%NUMBER.OF.INITIAL.SAMPLING.POINTS
+20
+
+----------------------RADIAL.BASIS.FUNCTION.PARAMETERS----------------------
+
+%SIGMA.TYPE
+'KFCV'
+'NAK'
+'LOOCV'
+'ASKIT'
+'UKIT'
+
+-----------------------------KRIGING.PARAMETERS-----------------------------
+
+%CORRELATION.TYPE
+'GAUSS'
+'MATERN'
+
+%KRG.HYPERPARAMETERS
+-3.0 3.0
+
+-----------------------ACQUISITION.FUNCTION.PARAMETERS----------------------
+
+%INFILL.CRITERIA
+'ExpectedImprovement'
+'ProbabilityOfImprovement'
+'LowerConfidenceBound'
+'SurrogateMinimization'
+
+%CONSTRAINT.HANDLING.METHOD
+'SCHONLAU'
+'BAGHERI'
+'TUTUM'
+'SOBESTER'
+
+%BETA.VALUE
+1.0
+
+%WEI.VALUE
+0.5
+
+%USE.CYCLIC.WEI
+0
+
+-------------------SUB.OPTIMIZATION.ALGORITHM.PARAMETERS-------------------
+
+%SUB.OPTIMIZATION.ALGORITHM
+'StdPSO'
+'StdDE'
+'StdGA'
+'LamPSO'
+'LamGA'
+
+%SUB.DE.TYPE
+'LocalToBest'
+'Rand1'
+'BestWithJitter'
+
+%SUB.PSO.TOPOLOGY
+'Square'
+'Ring'
+'Gbest'
+
+%SUB.MAXIMUM.GENERATIONS
+500
+
+%SUB.POPULATION.SIZE
+100
+
+%SUB.MUTATION.PROBABILITY
+0.05
+
+-----------------------------PENALTY.PARAMETERS-----------------------------
+
+%PENALTY.METHOD
+'Static'
+'Adaptive'
+'Deb2000'
+
+%PENALTY.CONSTANT.FACTOR
+1.0e15
+
+%END

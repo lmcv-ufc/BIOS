@@ -1,0 +1,28 @@
+%HEADER
+ 
+%MATERIAL
+2
+
+%MATERIAL.ISOTROPIC
+2
+1 70e9   0.30   0.00   0.00 
+2 380e9  0.30   0.00   0.00
+
+%FGM.MATERIALS
+2
+1
+2
+
+%FGM.MODEL
+'Mori-Tanaka'
+
+%FGM.VOLUME.DISTRIBUTION
+'BSpline'
+'Power-Law'
+'PCHIP'
+'Polynomial'
+
+%FGM.NUMBER.OF.CONTROL.POINTS
+5
+
+%END

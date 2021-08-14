@@ -1,0 +1,149 @@
+%HEADER
+Maximization of the load factor of a laminated square plate subjected to 
+biaxial loading. The maximum number of contiguous plies is limited to 4. 
+The PSO algorithm with global swarm topology, mutation operator, and layer 
+swap operator is used [1].
+
+One optimum solution:
+{x} = [(±45º)4 (0º)4 (90º)2 (0º)2 (0º 0º ±45º)2]s 
+lambda_min = -13531.54
+
+Refs:
+
+[1] Barroso, E. S.; Parente Jr., E.; Melo, A. M. C. A hybrid PSO-GA 
+algorithm for optimization of laminated composites. Structural and 
+Multidisciplinary Optimization. 2017.
+
+[2] Kogiso, N. Watson L. Gürdal, Z. Haftka, R. Genetic algorithms
+with local improvement for composite laminate design. Structural
+Optimization 7(4):207–218. 1994.
+
+--------------------------OPTIMIZATION.PARAMETERS---------------------------
+
+%OPTIMIZATION.ALGORITHM
+'SAORBF'
+'SAOKRG'
+
+%OPTIMIZATION.NUMBER
+1
+ 
+%MAXIMUM.GENERATIONS
+100
+
+%MAXIMUM.NUMBER.OF.POINTS
+100
+ 
+%MIGRATION.GENERATION.GAP
+10
+
+%MIGRATION.INDIVIDUAL.NUMBER
+1
+
+%MAXIMUM.THREAD.NUMBER
+1
+
+%STALL.GEN
+20
+
+------------------------------PROBLEM.PARAMETERS-----------------------------
+ 
+%INDIVIDUAL.TYPE
+'IntegerMatrix'
+
+%PROBLEM.TYPE
+'LamPltLoadFactor'
+
+---------------------------SAMPLING.PARAMETERS-----------------------------
+
+%SAMPLING.METHOD
+'NLHS'
+'LHS'
+'HAMMERSLEY'
+'RANDOM'
+'SOBOL'
+'CVT'
+'LCVT'
+
+%NUMBER.OF.INITIAL.SAMPLING.POINTS
+60
+
+----------------------RADIAL.BASIS.FUNCTION.PARAMETERS----------------------
+
+%SIGMA.TYPE
+'KFCV'
+'NAK'
+'LOOCV'
+'ASKIT'
+'UKIT'
+
+-----------------------------KRIGING.PARAMETERS-----------------------------
+
+%CORRELATION.TYPE
+'GAUSS'
+'MATERN'
+
+%KRG.HYPERPARAMETERS
+-3.0 3.0
+
+-----------------------ACQUISITION.FUNCTION.PARAMETERS----------------------
+
+%INFILL.CRITERIA
+'ExpectedImprovement'
+'ProbabilityOfImprovement'
+'LowerConfidenceBound'
+'SurrogateMinimization'
+
+%CONSTRAINT.HANDLING.METHOD
+'SCHONLAU'
+'BAGHERI'
+'TUTUM'
+'SOBESTER'
+
+%BETA.VALUE
+1.0
+
+%WEI.VALUE
+0.5
+
+%USE.CYCLIC.WEI
+0
+
+-------------------SUB.OPTIMIZATION.ALGORITHM.PARAMETERS-------------------
+
+%SUB.OPTIMIZATION.ALGORITHM
+'StdPSO'
+'StdDE'
+'StdGA'
+'LamPSO'
+'LamGA'
+
+%SUB.DE.TYPE
+'LocalToBest'
+'Rand1'
+'BestWithJitter'
+
+%SUB.PSO.TOPOLOGY
+'Square'
+'Ring'
+'Gbest'
+
+%SUB.MAXIMUM.GENERATIONS
+500
+
+%SUB.POPULATION.SIZE
+100
+
+%SUB.MUTATION.PROBABILITY
+0.05
+
+-----------------------------PENALTY.PARAMETERS-----------------------------
+
+%PENALTY.METHOD
+'Static'
+'Adaptive'
+'Deb2000'
+
+%PENALTY.CONSTANT.FACTOR
+1.0e15
+
+%END

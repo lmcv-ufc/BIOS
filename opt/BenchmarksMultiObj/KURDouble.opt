@@ -1,0 +1,80 @@
+%HEADER
+Optimization problem KUR. This problem deals with the multiobjective 
+optimization of the well-known function KUR [1], used for benchmarking
+purposes. In this class, the problem is solved using continuous variables
+and NSGAII.
+
+[1] A Fast and Elitist Multiobjective Genetic Algorithm: NSGA II. Deb, K.; 
+Pratap, A.; Agarwal, S. and Meyarivan, T. IEEE Transactions on Evolutionary
+Comptuation, vol. 6, no. 2, 2002.
+
+This problem has three variables.
+
+---------------------------OPTIMIZATION.PARAMETERS---------------------------
+
+%OPTIMIZATION.ALGORITHM
+'modnsgaii'
+
+%OPTIMIZATION.NUMBER
+1
+ 
+%MAXIMUM.GENERATIONS
+250
+
+%POPULATION.SIZE
+100
+ 
+%MIGRATION.GENERATION.GAP
+10
+
+%MIGRATION.INDIVIDUAL.NUMBER
+1
+
+%MAXIMUM.THREAD.NUMBER
+1
+
+%STALL.GEN
+1000
+
+%SAMPLING.METHOD
+'RANDOM'
+'LHS'
+'HAMMERSLEY'
+'NLHS'
+'RANDOM'
+'SOBOL'
+'CVT'
+'LCVT'
+
+------------------------------PROBLEM.PARAMETERS-----------------------------
+ 
+%INDIVIDUAL.TYPE
+'DoubleVector'
+
+%PROBLEM.TYPE
+'KUR'
+
+-----------------------------PENALTY.PARAMETERS-----------------------------
+ 
+%CONSTRAINT.TOLERANCE
+1.0e-3
+
+%PENALTY.METHOD
+'Normalization'
+
+-------------------------------NSGA.PARAMETERS------------------------------
+
+%SELECTION.METHOD
+'tournamentnsgaii'
+
+%CROSSOVER.METHOD
+'LinearCombination'
+'Classical'
+
+%CROSSOVER.RATE
+1.0
+
+%MUTATION.PROBABILITY
+0.50
+
+%END

@@ -1,0 +1,88 @@
+%HEADER
+Weight and cost minimization of a hybrid laminated square 
+plate subjected to a buckling constraint. Each ply has
+thickness equal to 0.127 mm and can be made of graphite-epoxy 
+or glass-epoxy. The PSO algorithm with square swarm topology, 
+and layer addition and deletion operators is used [1].
+The Weighted Compromise Programming Method (WCP) is used to 
+solve the bi-objective problem.
+
+Expected Parato Front:
+ w   cost  weight  Nlam   layup                                                                 
+0.00 9.171 89.935  52 [±45(gl)5 0(gl)2 90(gl)2 ±45(gl)5 90(gl)2]s                        
+0.05 9.171 89.935  52 [±45(gl)3 90(gl)2 ±45(gl)2 0(gl)2 ±45(gl)6]s                      
+0.10 9.171 89.935  52 [±45(gl)4 0(gl)2 ±45(gl)3 0(gl)2 ±45(gl)2 90(gl)2 0(gl)2]s      
+0.15 12.306 81.672 48 [0(gl)2 ±45(g) ± 45(gl)4 90(gl)2 ±45(gl) 0(gl)2 ±45(gl) 0(gl)4]s 
+0.20 12.306 81.672 48 [±45(g) ±45(gl)10 90(gl)2]s
+0.25 15.441 73.409 44 [±45(g) ±45(gl) ± 45(g) ±45(gl)8]s
+0.30 15.441 73.409 44 [±45(g)2 ±45(gl)3 0(g)2 90(gl)2 0(g)2 90(gl)2 0(gl)2 ±45(g)]s
+0.35 18.576 65.146 40 [±45(g)3 ±45(gl) 0(gl)2 ±45(gl)2 0(gl)2 ±45(gl)2]s
+0.40 18.576 65.146 40 [±45(g)3 ±45(gl) 0(gl)2 ±45(gl)5]s
+0.45 18.576 65.146 40 [±45(g)3 ±45(gl)2 0(gl)2 ±45(gl) 90(gl)2 ±45(gl)2]s
+0.50 18.576 65.146 40 [±45(g)3 ±45(gl) 0(gl)2 ±45(gl)2 90(gl)2 ±45(gl)2]s
+0.55 18.576 65.146 40 [±45(g)3 ±45(gl)2 0(gl)2 ±45(gl)4]s
+0.60 18.576 65.146 40 [±45(g)3 ±45(gl)3 0(gl)2 ±45(gl)3]s
+0.65 22.417 63.800 40 [±45(g)3 90(gl)4 ±45(gl)3 0(gl)2 90(g)2]s
+0.70 26.258 62.455 40 [±45(g) 0(g)2 ±45(g)2 ±45(gl) 90(gl)2 0(gl)2 ±45(g) 90(gl)2 ±45(gl)]s
+0.75 30.098 61.110 40 [±45(g)3 ±45(gl)3 ±45(g)2 90(g)2 90(gl)2]s
+0.80 33.939 59.765 40 [±45(g)5 ±45(gl) ±45(g) ±45(gl)2 90(g)2]s
+0.85 37.780 58.420 40 [±45(g)2 90(g)2 ±45(g)4 ±45(gl)2 ±45(g)]s
+0.90 41.620 57.074 40 [±45(g)4 90(g)2 ±45(g) 90(g)2 ±45(g) 90(gl)2 ±45(g)]s
+0.95 45.461 55.729 40 [±45(g)5 90(g)2 0(g)2 ±45(g)2 0(g)2]s
+1.00 45.461 55.729 40 [±45(g)10]s
+
+Refs:
+
+[1] Barroso, E. S.; Parente Jr., E.; Melo, A. M. C. A hybrid PSO-GA 
+algorithm for optimization of laminated composites. Structural and 
+Multidisciplinary Optimization. 2017.
+
+[2] Rao ARM, Lakshmi K (2009) Multi-objective optimal design of
+hybrid laminate composite structures using scatter search. J Compos Mater 43(20):2157–2182. 2009. 
+ 
+%OPTIMIZATION.ALGORITHM
+'LamPSO'
+ 
+%INDIVIDUAL.TYPE
+'IntegerMatrix'
+
+%OPTIMIZATION.NUMBER
+100
+
+%MAXIMUM.ITERATIONS
+100
+
+%SWARM.SIZE
+50
+ 
+%CONSTRAINT.TOLERANCE
+1.0e-5
+
+%PROBLEM.TYPE
+'LamPltBuckMOBJ'
+
+%PENALTY.METHOD
+'Deb2000'
+
+%SWARM.TOPOLOGY
+'Square'
+
+%PARTICLE.INERTIA
+'CONSTANT' 1.01
+
+%COGNITIVE.FACTOR
+'CONSTANT' 2.4
+
+%SOCIAL.FACTOR
+'CONSTANT' 0.67
+
+MUTATION.PROBABILITY
+0.04
+
+LAYERADD.PROBABILITY
+0.04
+
+LAYERDEL.PROBABILITY
+0.04
+
+%END

@@ -1,0 +1,152 @@
+%HEADER
+Optimization of a 5-segment cantilever beam. This problem is an engineering
+optimization problem which deals with the volume minimization of a cantilever
+beam with five different segments (with different width and height), subjected
+to displacement, geometry and stress related constraints [1]. In this class,
+the problem is solved using continuous variables.
+
+[1] Thanedar, P. B.; Vanderplaats, G. N. Survey of Discrete Variable Optimiza-
+    tion for Structural Design. Jornal of Structural Engineering, v. 121,
+    p. 301-306.
+
+This problem has 10 variables, and 11 constraints.
+The global optimum is given by:
+f(x) = 61915.9
+
+This file will solve the problem using integer type individuals (Integer)
+and employing Surrogate-Based Optimization. Only the objective function will
+be approximated by a surrogate.
+
+--------------------------OPTIMIZATION.PARAMETERS---------------------------
+
+%OPTIMIZATION.ALGORITHM
+'SAOKRG'
+'SAORBF'
+
+%OPTIMIZATION.NUMBER
+1
+ 
+%MAXIMUM.GENERATIONS
+100
+
+%MAXIMUM.NUMBER.OF.POINTS
+100
+ 
+%MIGRATION.GENERATION.GAP
+10
+
+%MIGRATION.INDIVIDUAL.NUMBER
+1
+
+%MAXIMUM.THREAD.NUMBER
+10
+
+%STALL.GEN
+20
+
+------------------------------PROBLEM.PARAMETERS-----------------------------
+ 
+%INDIVIDUAL.TYPE
+'DoubleVector'
+'IntegerVector'
+
+%PROBLEM.TYPE
+'Beam'
+
+%%MINIMUM.OBJECTIVE.FUNCTION
+61915.9
+
+---------------------------SAMPLING.PARAMETERS-----------------------------
+
+%SAMPLING.METHOD
+'NLHS'
+'LHS'
+'HAMMERSLEY'
+'RANDOM'
+'SOBOL'
+'CVT'
+'LCVT'
+
+%NUMBER.OF.INITIAL.SAMPLING.POINTS
+30
+
+----------------------RADIAL.BASIS.FUNCTION.PARAMETERS----------------------
+
+%SIGMA.TYPE
+'KFCV'
+'NAK'
+'LOOCV'
+'ASKIT'
+'UKIT'
+
+-----------------------------KRIGING.PARAMETERS-----------------------------
+
+%CORRELATION.TYPE
+'GAUSS'
+'MATERN'
+
+%KRG.HYPERPARAMETERS
+-3.0 3.0
+
+-----------------------ACQUISITION.FUNCTION.PARAMETERS----------------------
+
+%INFILL.CRITERIA
+'ExpectedImprovement'
+'ProbabilityOfImprovement'
+'LowerConfidenceBound'
+'SurrogateMinimization'
+
+%CONSTRAINT.HANDLING.METHOD
+'SCHONLAU'
+'BAGHERI'
+'TUTUM'
+'SOBESTER'
+
+%BETA.VALUE
+1.0
+
+%WEI.VALUE
+0.5
+
+%USE.CYCLIC.WEI
+0
+
+-------------------SUB.OPTIMIZATION.ALGORITHM.PARAMETERS-------------------
+
+%SUB.OPTIMIZATION.ALGORITHM
+'StdPSO'
+'StdDE'
+'StdGA'
+'LamPSO'
+'LamGA'
+
+%SUB.DE.TYPE
+'LocalToBest'
+'Rand1'
+'BestWithJitter'
+
+%SUB.PSO.TOPOLOGY
+'Square'
+'Ring'
+'Gbest'
+
+%SUB.MAXIMUM.GENERATIONS
+500
+
+%SUB.POPULATION.SIZE
+100
+
+%SUB.MUTATION.PROBABILITY
+0.05
+
+-----------------------------PENALTY.PARAMETERS-----------------------------
+
+%PENALTY.METHOD
+'Static'
+'Adaptive'
+'Deb2000'
+
+%PENALTY.CONSTANT.FACTOR
+1.0e15
+
+%END

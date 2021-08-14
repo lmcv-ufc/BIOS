@@ -1,0 +1,142 @@
+%HEADER
+Maximization of the critical buckling load of a FG square plate with a hole
+in its center, under ceramic volume fraction and mass-related constraints.
+This problem is described and solved in Ribeiro et al. [1] using a
+RBF-based SAO, and in Maia et al. [2] using a KRG-based SAO.
+
+This problem has 6 variables, and 2 cheap constraints.
+The global optimum is found at:
+{x} = {0.0378, 1.0, 1.0, 1.0, 0.0, 0.0}
+f(x) = -247317
+
+Refs:
+
+[1] Ribeiro, L. G.; Maia, M. A.; Parente Jr., E.; Melo, A. M. C. Surrogate based 
+    optimization of functionally graded plates using radial basis functions. Composite
+    structures, v. 252, 2020.
+
+[2] Maia, M. A.; Parente Jr., E.; Melo, A. M. C. Kriging-based optimization of
+    functionally graded structures. Structural and Multidisciplinary Optimization. 
+    2021.
+
+---------------------------OPTIMIZATION.PARAMETERS---------------------------
+
+%OPTIMIZATION.ALGORITHM
+'StdDE'
+'StdPSO'
+
+%OPTIMIZATION.NUMBER
+1
+ 
+%MAXIMUM.GENERATIONS
+100
+
+%POPULATION.SIZE
+50
+ 
+%MIGRATION.GENERATION.GAP
+10
+
+%MIGRATION.INDIVIDUAL.NUMBER
+1
+
+%MAXIMUM.THREAD.NUMBER
+1
+
+%STALL.GEN
+200
+
+%SAMPLING.METHOD
+'LHS'
+'HAMMERSLEY'
+'NLHS'
+'RANDOM'
+'SOBOL'
+'CVT'
+'LCVT'
+
+------------------------------PROBLEM.PARAMETERS-----------------------------
+ 
+%INDIVIDUAL.TYPE
+'DoubleVector'
+'IntegerVector'
+
+%PROBLEM.TYPE
+'SquarePlateHoleBuckFGM'
+
+-----------------------------PENALTY.PARAMETERS-----------------------------
+ 
+%CONSTRAINT.TOLERANCE
+1.0e-5
+
+%PENALTY.METHOD
+'Static'
+'Adaptive'
+'Deb2000'
+
+%PENALTY.CONSTANT.FACTOR
+1.0e5
+
+------------------------GENETIC.ALGORITHM.PARAMETERS-------------------------
+
+%SELECTION.METHOD
+'Ranking'
+'FitnessProportional'
+'Tourney'
+
+%CROSSOVER.METHOD
+'LinearCombination'
+'Classical'
+
+%CROSSOVER.RATE
+0.80
+
+%MUTATION.PROBABILITY
+0.05
+
+--------------------PARTICLE.SWARM.OPTIMIZATION.PARAMETERS-------------------
+
+%SWARM.TOPOLOGY
+'Square'
+'Ring'
+'Gbest'
+
+%PARTICLE.INERTIA
+'CONSTANT' 0.72
+
+%COGNITIVE.FACTOR
+'CONSTANT' 1.5
+
+%SOCIAL.FACTOR
+'CONSTANT' 1.5
+
+------------------------DIFFERENTIAL.EVOLUTION.PARAMETERS-------------------------
+
+%DIFFERENTIATION.METHOD
+'LocalToBest'
+'Rand1'
+'BestWithJitter'
+
+%CROSSOVER.RATE
+0.80
+
+%F.WEIGHT
+0.85
+
+-----------------------ARTIFICIAL.BEE.COLONY.PARAMETERS----------------------      
+
+%FOOD.MAXTRIAL.RATE
+10000
+
+%FOOD.RATE
+0.5
+
+%SCOUTBEES.RATE
+0.00
+
+----------------------ARTIFICIAL.IMMUNE.SYSTEM.PARAMETERS--------------------   
+
+%HYPERMUTATE.DECAY.RATE
+5
+
+%END

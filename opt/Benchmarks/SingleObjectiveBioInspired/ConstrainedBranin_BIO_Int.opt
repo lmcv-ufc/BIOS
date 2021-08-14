@@ -1,0 +1,136 @@
+%HEADER
+Optimization problem Constrained Branin. This problem is a modification
+over a very well-known optimization problem, usually employed for example
+purposes in SAO [1].  In this class, the problem is solved using discrete
+individuals.
+
+[1] FORRESTER, Alexander et al. Engineering design via surrogate modelling: a
+practical guide. John Wiley & Sons, 2008.
+
+This problem has 2 variables, and one constraint.
+The problem optimum is:
+f(x) = 0.397887
+
+This file will solve the problem using integer type individuals (Discrete).
+
+---------------------------OPTIMIZATION.PARAMETERS---------------------------
+
+%OPTIMIZATION.ALGORITHM
+'StdPSO'
+'StdGA'
+
+%OPTIMIZATION.NUMBER
+1
+ 
+%MAXIMUM.GENERATIONS
+500
+
+%POPULATION.SIZE
+100
+ 
+%MIGRATION.GENERATION.GAP
+10
+
+%MIGRATION.INDIVIDUAL.NUMBER
+1
+
+%MAXIMUM.THREAD.NUMBER
+10
+
+%STALL.GEN
+200
+
+%SAMPLING.METHOD
+'LHS'
+'HAMMERSLEY'
+'NLHS'
+'RANDOM'
+'SOBOL'
+'CVT'
+'LCVT'
+
+------------------------------PROBLEM.PARAMETERS-----------------------------
+ 
+%INDIVIDUAL.TYPE
+'IntegerVector'
+'DoubleVector'
+
+%PROBLEM.TYPE
+'ConstrainedBranin'
+
+-----------------------------PENALTY.PARAMETERS-----------------------------
+ 
+%CONSTRAINT.TOLERANCE
+1.0e-5
+
+%PENALTY.METHOD
+'Static'
+'Adaptive'
+'Deb2000'
+
+%PENALTY.CONSTANT.FACTOR
+1.0e5
+
+------------------------GENETIC.ALGORITHM.PARAMETERS-------------------------
+
+%SELECTION.METHOD
+'Ranking'
+'FitnessProportional'
+'Tourney'
+
+%CROSSOVER.METHOD
+'LinearCombination'
+'Classical'
+
+%CROSSOVER.RATE
+0.80
+
+%MUTATION.PROBABILITY
+0.05
+
+--------------------PARTICLE.SWARM.OPTIMIZATION.PARAMETERS-------------------
+
+%SWARM.TOPOLOGY
+'Square'
+'Ring'
+'Gbest'
+
+%PARTICLE.INERTIA
+'CONSTANT' 0.72
+
+%COGNITIVE.FACTOR
+'CONSTANT' 1.5
+
+%SOCIAL.FACTOR
+'CONSTANT' 1.5
+
+------------------------DIFFERENTIAL.EVOLUTION.PARAMETERS-------------------------
+
+%DIFFERENTIATION.METHOD
+'LocalToBest'
+'Rand1'
+'BestWithJitter'
+
+%CROSSOVER.RATE
+0.80
+
+%F.WEIGHT
+0.85
+
+-----------------------ARTIFICIAL.BEE.COLONY.PARAMETERS----------------------      
+
+%FOOD.MAXTRIAL.RATE
+10000
+
+%FOOD.RATE
+0.5
+
+%SCOUTBEES.RATE
+0.00
+
+----------------------ARTIFICIAL.IMMUNE.SYSTEM.PARAMETERS--------------------   
+
+%HYPERMUTATE.DECAY.RATE
+5
+
+%END

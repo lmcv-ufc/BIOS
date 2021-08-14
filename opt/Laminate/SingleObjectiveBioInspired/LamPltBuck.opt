@@ -1,0 +1,70 @@
+%HEADER
+Maximization of the load factor of a laminated square plate subjected to 
+biaxial loading. The maximum number of contiguous plies is limited to 4. 
+The PSO algorithm with global swarm topology, mutation operator, and layer 
+swap operator is used [1].
+
+One optimum solution:
+{x} = [(±45º)4 (0º)4 (90º)2 (0º)2 (0º 0º ±45º)2]s 
+lambda_min = -13531.54
+
+Refs:
+
+[1] Barroso, E. S.; Parente Jr., E.; Melo, A. M. C. A hybrid PSO-GA 
+algorithm for optimization of laminated composites. Structural and 
+Multidisciplinary Optimization. 2017.
+
+[2] Kogiso, N. Watson L. Gürdal, Z. Haftka, R. Genetic algorithms
+with local improvement for composite laminate design. Structural
+Optimization 7(4):207–218. 1994.
+ 
+%OPTIMIZATION.ALGORITHM
+'LamPSO'
+'LamGA'
+ 
+%INDIVIDUAL.TYPE
+'IntegerMatrix'
+
+%OPTIMIZATION.NUMBER
+1
+
+%MAXIMUM.ITERATIONS
+100
+42
+
+%POPULATION.SIZE
+50
+12
+ 
+%CONSTRAINT.TOLERANCE
+1.0e-5
+
+%PROBLEM.TYPE
+'LamPltBuckMOBJ'
+
+%PENALTY.METHOD
+'Deb2000'
+
+%SWARM.TOPOLOGY
+'Square'
+'Gbest'
+
+%PARTICLE.INERTIA
+'CONSTANT' 1.01
+
+%COGNITIVE.FACTOR
+'CONSTANT' 2.4
+
+%SOCIAL.FACTOR
+'CONSTANT' 0.67
+
+MUTATION.PROBABILITY
+0.04
+
+LAYERADD.PROBABILITY
+0.04
+
+LAYERDEL.PROBABILITY
+0.04
+
+%END

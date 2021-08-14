@@ -1,0 +1,136 @@
+%HEADER
+Optimization of a 5-segment cantilever beam. This problem is an engineering
+optimization problem which deals with the volume minimization of a cantilever
+beam with five different segments (with different width and height), subjected
+to displacement, geometry and stress related constraints [1]. In this class,
+the problem is solved using continuous variables.
+
+[1] Thanedar, P. B.; Vanderplaats, G. N. Survey of Discrete Variable Optimiza-
+    tion for Structural Design. Jornal of Structural Engineering, v. 121,
+    p. 301-306.
+
+This problem has 10 variables, and 11 constraints.
+The global optimum is given by:
+f(x) = 61915.9
+
+---------------------------OPTIMIZATION.PARAMETERS---------------------------
+
+%OPTIMIZATION.ALGORITHM
+'StdPSO'
+'StdDE'
+
+%OPTIMIZATION.NUMBER
+1
+ 
+%MAXIMUM.GENERATIONS
+500
+
+%POPULATION.SIZE
+100
+ 
+%MIGRATION.GENERATION.GAP
+10
+
+%MIGRATION.INDIVIDUAL.NUMBER
+1
+
+%MAXIMUM.THREAD.NUMBER
+10
+
+%STALL.GEN
+200
+
+%SAMPLING.METHOD
+'LHS'
+'HAMMERSLEY'
+'NLHS'
+'RANDOM'
+'SOBOL'
+'CVT'
+'LCVT'
+
+------------------------------PROBLEM.PARAMETERS-----------------------------
+ 
+%INDIVIDUAL.TYPE
+'DoubleVector'
+'IntegerVector'
+
+%PROBLEM.TYPE
+'Beam'
+
+-----------------------------PENALTY.PARAMETERS-----------------------------
+ 
+%CONSTRAINT.TOLERANCE
+1.0e-5
+
+%PENALTY.METHOD
+'Static'
+'Adaptive'
+'Deb2000'
+
+%PENALTY.CONSTANT.FACTOR
+1.0e10
+
+------------------------GENETIC.ALGORITHM.PARAMETERS-------------------------
+
+%SELECTION.METHOD
+'Ranking'
+'FitnessProportional'
+'Tourney'
+
+%CROSSOVER.METHOD
+'LinearCombination'
+'Classical'
+
+%CROSSOVER.RATE
+0.80
+
+%MUTATION.PROBABILITY
+0.05
+
+--------------------PARTICLE.SWARM.OPTIMIZATION.PARAMETERS-------------------
+
+%SWARM.TOPOLOGY
+'Square'
+'Ring'
+'Gbest'
+
+%PARTICLE.INERTIA
+'CONSTANT' 0.72
+
+%COGNITIVE.FACTOR
+'CONSTANT' 1.5
+
+%SOCIAL.FACTOR
+'CONSTANT' 1.5
+
+------------------------DIFFERENTIAL.EVOLUTION.PARAMETERS-------------------------
+
+%DIFFERENTIATION.METHOD
+'LocalToBest'
+'Rand1'
+'BestWithJitter'
+
+%CROSSOVER.RATE
+0.80
+
+%F.WEIGHT
+0.85
+
+-----------------------ARTIFICIAL.BEE.COLONY.PARAMETERS----------------------      
+
+%FOOD.MAXTRIAL.RATE
+10000
+
+%FOOD.RATE
+0.5
+
+%SCOUTBEES.RATE
+0.00
+
+----------------------ARTIFICIAL.IMMUNE.SYSTEM.PARAMETERS--------------------   
+
+%HYPERMUTATE.DECAY.RATE
+5
+
+%END
