@@ -32,12 +32,12 @@ DEBUG	= -g
 OPTMIZ	=
 OPTMIZ	= -O2
 #DEFINE	= -D_UNIX_ -D_MPI_ -D_OMP_
-DEFINE = -D_UNIX_ -D_OMP_
-#DEFINE	= -D_UNIX_
+#DEFINE = -D_UNIX_ -D_OMP_
+DEFINE	= -D_UNIX_
 INCLUDE	= -I$(CTRL) -I$(PROB) -I$(MAIN) -I$(MLIB) -I$(PEN) \
           -I$(SOL) -I$(SUR)
-CFLAGS	= -fopenmp $(INCLUDE) $(POLICE) $(DEBUG) $(OPTMIZ) $(DEFINE)
-#CFLAGS	= $(INCLUDE) $(POLICE) $(DEBUG) $(OPTMIZ) $(DEFINE)
+#CFLAGS	= -fopenmp $(INCLUDE) $(POLICE) $(DEBUG) $(OPTMIZ) $(DEFINE)
+CFLAGS	= $(INCLUDE) $(POLICE) $(DEBUG) $(OPTMIZ) $(DEFINE)
 SYSLIBS	= -lm  
 
 # Aplication modules
@@ -123,8 +123,8 @@ FIRST: $(DIRS)
 	$(MAKE) $(DIR)/bios
 
 $(DIR)/bios	: $(DIRS) $(OBJS)
-#		$(CC) -o $@ $(OBJS) $(SYSLIBS)
-	$(CC) -fopenmp -o $@ $(OBJS) $(SYSLIBS)
+		$(CC) -o $@ $(OBJS) $(SYSLIBS)
+#	$(CC) -fopenmp -o $@ $(OBJS) $(SYSLIBS)
 #		$(CC) -o $@ $(OBJS) -static -pg $(SYSLIBS)
 
 # Object compilation
