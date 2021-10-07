@@ -35,7 +35,7 @@
 #include <fstream>
 #include <iomanip>
 #include <vector>
-#include <bits/stdc++.h>
+//#include <bits/stdc++.h>
 
 #ifdef _OMP_
 #include "omp.h"

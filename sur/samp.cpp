@@ -41,7 +41,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
-#include <bits/stdc++.h>
+//#include <bits/stdc++.h>
 
 #include "vec.h"
 #include "mat.h"
