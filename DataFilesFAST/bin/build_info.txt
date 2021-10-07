@@ -1,0 +1,5 @@
+FAST build info
+
+- Windows: Windows 10 mingw
+- macOS:   macOS Catalina v10.15.3 clang v11.0.0
+- Linux:   Lubuntu 20.04 g++ v9.3.0
