@@ -89,6 +89,62 @@ class cSquarePlateBuckFGM : public cFGMPlate
 };
 
 // -------------------------------------------------------------------------
+// Definition of SquarePlateTridirBuckFGM class:
+//
+// Maximization of the buckling critical load of a FG square plate, under
+// a ceramic volume fraction-related constraint. In this problem, the
+// gradation is given in three directions [1].
+//
+// Refs:
+// [1] Do, D.; Nguyen-Xuan, H.; Jaehong, L. Material optimization of
+//     tri-directional functionally graded plates by using deep neural
+//     network and isogeometric multimesh design approach. Applied
+//     Mathematical Modelling, v. 87, 2020.
+//
+class cSquarePlateTridirBuckFGM : public cFGMPlate
+{
+ protected:
+  void     Analysis(cVector, double &);
+
+ public:
+           cSquarePlateTridirBuckFGM(void);
+          ~cSquarePlateTridirBuckFGM(void) { }
+  void     Evaluate(cVector & ,cVector &, cVector &);
+  void     EvalExactFobj(cVector&,double &){ };
+  void     EvalExactConstraint(int, cVector&, double &);
+  void     GetApproxObj(bool*o) { o[0] = 1; }
+  void     GetApproxConstr(bool*);
+};
+
+// -------------------------------------------------------------------------
+// Definition of SquarePlateTridirBuckFGM class:
+//
+// Maximization of the buckling critical load of a FG shell, under
+// a ceramic volume fraction-related constraint. In this problem, the
+// gradation is given in three directions.
+//
+class cShellTridirBuckFGM : public cFGMPlate
+{
+ protected:
+  double   W_MObj;
+  void     Analysis(cVector, double &);
+
+ public:
+  void     ReadW(std::istream&);
+
+           cShellTridirBuckFGM(void);
+          ~cShellTridirBuckFGM(void) { }
+  void     Evaluate(cVector & ,cVector &, cVector &);
+  void     EvalVolumeHole(cVector, double, cVector, double&);
+  void     EvalExactFobj(cVector&,double &){ };
+  void     EvalExactConstraint(int, cVector&, double &);
+  void     GetApproxObj(bool*o) { o[0] = 1; }
+  void     GetApproxConstr(bool*);
+  void     LoadReadFunc(cInpMap&);
+  void     Write(cVector&,ostream&);
+};
+
+// -------------------------------------------------------------------------
 // Definition of SquarePlateFreqFGM class:
 //
 // Maximization of the fundamental frequency of a FG square plate, under
@@ -225,6 +281,7 @@ class cScoordelisFGM : public cFGMPlate
 //     Structural and Multidisciplinary Optimization. Submitted for
 //     publication.
 //
+
 class cCircularPlateFreqFGM : public cFGMPlate
 {
  protected:

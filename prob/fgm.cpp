@@ -1552,6 +1552,136 @@ void cFGM :: EvalVolumeRatio(cVector Vcp, double &v)
     v = vtemp;
 }
 
+// ============================== EvalVolumeRatio3D =================================
+
+void cFGM :: EvalVolumeRatio3D(cVector Vcp, double &v, int Nbx, int Nby, int Nbz)
+{
+    int ngauss = 5;
+
+    int ngaussthk = 2;
+
+    cVector r, w;
+    GaussPts1D(ngauss, r, w);
+
+    cVector rthk, wthk;
+    GaussPts1D(ngaussthk, rthk, wthk);
+
+    //r.Print();
+    //w.Print();
+
+    cMatrix *CP;
+
+    CP = new cMatrix[Nbz];
+
+    for (int m = 0; m < Nbz; m++){
+        cMatrix auxM(Nbx,Nby);
+        for (int j = 0; j < Nby; j++){
+            for (int i = 0; i < Nbx; i++)
+            {
+              auxM[j][i] = Vcp[m*Nbx*Nby + j*Nbx + i];
+            }
+        }
+        CP[m].Resize(Nbx, Nby);
+        CP[m] = auxM;
+    }
+
+    int px, py, pz;
+    px = py = pz = 3;
+
+    int mx = Nbx + px + 1;
+    int my = Nby + py + 1;
+    int mz = Nbz + pz + 1;
+
+    // Knot vectors
+
+    double lxupp, lxlow, lyupp, lylow, lzupp, lzlow;
+
+    lxupp = lyupp = lzupp =  1.0;
+    lxlow = lylow = lzlow = -1.0;
+
+    // x axis
+    cVector Ux( mx );
+    for (int i = 0; i < mx; i++){
+        if (i < (px + 1)) Ux[i] = 0;
+        else if (i >= Nbx) Ux[i] = 1;
+        else{
+            Ux[i] = Ux[i - 1] + 1.0/(Nbx - px);
+        }
+    }
+
+    for (int i = 0; i < mx; i++){
+        Ux[i] = Ux[i]*(lxupp - lxlow) + lxlow; // Knot vector defined between lxlow and lxupp
+    }
+
+    // y axis
+    cVector Uy( my );
+    for (int i = 0; i < my; i++){
+        if (i < (py + 1)) Uy[i] = 0;
+        else if (i >= Nby) Uy[i] = 1;
+        else{
+            Uy[i] = Uy[i - 1] + 1.0/(Nby - py);
+        }
+    }
+
+    for (int i = 0; i < my; i++){
+        Uy[i] = Uy[i]*(lyupp - lylow) + lylow; // Knot vector defined between lylow and lyupp
+    }
+
+    // z axis
+    cVector Uz( mz );
+    for (int i = 0; i < mz; i++){
+        if (i < (pz + 1)) Uz[i] = 0;
+        else if (i >= Nbz) Uz[i] = 1;
+        else{
+            Uz[i] = Uz[i - 1] + 1.0/(Nbz - pz); // Knot vector defined between 0 and 1
+        }
+    }
+
+    for (int i = 0; i < mz; i++){
+        Uz[i] = Uz[i]*(lzupp - lzlow) + lzlow; // Knot vector defined between lzlow and lzupp
+    }
+
+    int n    = ngauss;
+    int nthk = ngaussthk;
+
+    cVector V2(1);
+    V2[0] = 0.0;
+    int NumTot = n*n*n;
+    cVector Vcpg(NumTot);
+
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            for (int k = 0; k < nthk; k++)
+            {
+                cMatrix cdnt(3,1);
+                cdnt[0][0] = r[i];
+                cdnt[1][0] = r[j];
+                cdnt[2][0] = rthk[k];
+                BsplineSol(CP, 1, cdnt, V2, Nbx, Nby, Nbz, px, py, pz, Ux, Uy, Uz);
+                Vcpg[i*n*n + j*n + k] = V2[0];
+            }
+        }
+    }
+
+    v = 0;
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            for (int k = 0; k < nthk; k++)
+            {
+                v += Vcpg[i*n*n + j*n + k]*w[i]*w[j]*wthk[k];
+            }
+        }
+    }
+
+    v = v/8.0;
+
+    delete [] CP;
+}
+
 // ===============================================================
 
 void cFGM :: EvalDens(double exp, double &m)
@@ -1763,6 +1893,45 @@ void cFGM :: CalcMb(double t, cVector r, cVector w, cVector Rhopg, cMatrix &Mb)
   Mb[1][3] = -I1;
   Mb[3][1] = -I1;
   Mb[4][0] = I1;
+}
+
+// ============================== BsplineSol ===============================
+
+void cFGM :: BsplineSol(cMatrix *CP, int nt, cMatrix coord, cVector& Vc, int nbx, int nby, int nbz, int px, int py, int pz, cVector Ux, cVector Uy, cVector Uz)
+{
+    Vc.Resize(nt);
+    cVector C(nt);
+
+    for (int i = 0; i < nt; i++){
+        SolidPoint( nbx, nby, nbz, px, py, pz, Ux, Uy, Uz, CP, coord, C[i] );
+        Vc[i] = C[i];
+    }
+}
+
+// ============================== SolidPoint ===============================
+
+void cFGM :: SolidPoint(int nbx, int nby, int nbz, int px, int py, int pz, cVector Ux, cVector Uy, cVector Uz, cMatrix *CP, cMatrix coord, double &C)
+{
+    int spanx = FindSpan( nbx, px, coord[0][0], Ux);
+    cVector Nx(nbx);
+    BasisFuns( spanx, coord[0][0], px, Ux, Nx );
+
+    int spany = FindSpan( nby, py, coord[1][0], Uy);
+    cVector Ny(nby);
+    BasisFuns( spany, coord[1][0], py, Uy, Ny );
+
+    int spanz = FindSpan( nbz, pz, coord[2][0], Uz);
+    cVector Nz(nbz);
+    BasisFuns( spanz, coord[2][0], pz, Uz, Nz );
+
+    C = 0.0;
+    for ( int i = 0; i <= px; i++ ){
+        for (int j = 0; j <= py; j++ ){
+            for (int m = 0; m <= pz; m++){
+                C = C + Nx[i]*Ny[j]*Nz[m]*CP[m][i][j];
+            }
+        }
+    }
 }
 
 

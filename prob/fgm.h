@@ -114,6 +114,7 @@ class cFGM : public cProblem
           void     MoriTanaka(cVector, cVector &, cVector &, cVector &, cVector &);
           void     EvalVolumeRatio(double, double &);
           void     EvalVolumeRatio(cVector, double &);
+          void     EvalVolumeRatio3D(cVector, double &, int, int, int);
           void     EvalDens(double, double &);
           void     EvalDens(cVector, double &);
           void     EvalCost(double, double &);
@@ -122,6 +123,9 @@ class cFGM : public cProblem
           void     CalcMb(double, cVector, cVector, cVector, cMatrix &);
           void     QMatrix(double, double, cMatrix &, cMatrix &);
  virtual  void     PrintResult(int**, ostream&);
+
+          void     BsplineSol(cMatrix *, int, cMatrix, cVector&, int, int, int, int, int, int, cVector, cVector, cVector);
+          void     SolidPoint(int, int, int, int, int, int, cVector, cVector, cVector, cMatrix*, cMatrix, double&);
 
  public:
           void     ReadFGMaterials(std::istream&);
