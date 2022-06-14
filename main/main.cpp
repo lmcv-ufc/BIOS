@@ -70,7 +70,7 @@ using namespace std;
 #include "utl.h"
 
 typedef long double tClock;
-const string Version("1.0.0 - Aug/2021");
+const string Version("4.0.0 - Feb/2022");
 
 // -------------------------------------------------------------------------
 // Global variables:
