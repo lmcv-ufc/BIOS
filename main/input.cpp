@@ -85,7 +85,7 @@ cAbsReadEntry* cInpMap :: GetFunc(string label)
     return Map[label];
   else
     if (Feedback)
-      cout << "This Label: " + label+ " dont have any associated function.\n";
+      cout << "This Label: " + label+ " does not have any associated function.\n";
 
   return 0;
 }
@@ -103,7 +103,8 @@ bool cInpMap:: Insert(string label, cAbsReadEntry *func)
   else
   {
     if (Feedback)
-      cout << "Label " + label+ " already added in input map.";
+      cout << "Label " + label+ " has already been added in input map.";
+    
     return false;
   }
 }
