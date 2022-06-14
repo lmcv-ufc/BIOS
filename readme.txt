@@ -1,5 +1,5 @@
 BIOS - Bio-Inspired Optimization System
-Version: 4.0
+Version: 4.0.0
 -----------------------------------------------------------------------
 This program obtains optimum solutions for engineering problems using
 a Genetic Algorithm with a hybrid computational parallelization scheme. 
