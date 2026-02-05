@@ -1,0 +1,26 @@
+
+
+%INTEGRATION.ORDER
+1
+1	3	3	1	3	3	1
+
+%INTEGRATION.TYPE
+1
+1      'Gauss'
+
+%INTEGRATION.LABEL
+1
+1      Quad  
+
+%ELEMENT
+4
+
+%ELEMENT.SHALLOWSHELL.BSPLINE.SURFACE
+4
+1           1 1 1 1    1   
+2           1 1 1 2    1   
+3           1 1 1 1    2   
+4           1 1 1 2    2     
+
+%END
+
