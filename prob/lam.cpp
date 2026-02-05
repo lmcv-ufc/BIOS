@@ -131,6 +131,7 @@ void cLaminated :: ReadThickRange(istream &in)
     cout << "Error in the input of the laminate thickness range." << endl;
     exit(0);
   }
+  cout << "MinThk = " << MinThk << "  dThk = " << dThk << "  MaxThk = " << MaxThk << endl;
 }
 
 // =========================== ReadThickValues =============================

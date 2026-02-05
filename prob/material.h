@@ -78,16 +78,20 @@ class cMaterial
   static cMaterial **VecMat;
 
  protected:
-  eMatType  Type;      // Material type
-  int       Label;     // Material label
-  double    Density;   // Mass density
-  double    Cost;      // Material cost
+  eMatType  Type;         // Material type
+  int       Label;        // Material label
+  double    Density;      // Mass density
+  double    Conductivity; // Material conductivity
+  double    Expansion;    // Material expansion
+  double    Cost;         // Material cost
 
  public:
   static void       ReadNumMat(std::istream&);
   static void       ReadIso(std::istream&);
   static void       ReadOrtho(std::istream&);
   static void       ReadDensity(std::istream&);
+  static void       ReadConductivity(std::istream&);
+  static void       ReadExpansion(std::istream&);
   static void       ReadCost(std::istream&);
   static void       Destroy(void);
   static int        GetNumMat(void) { return NumMat; }
@@ -100,6 +104,8 @@ class cMaterial
           eMatType  GetType(void) { return Type; }
           int       GetLabel(void) { return Label; }
           double    GetDensity(void) {return Density; }
+          double    GetConductivity(void) {return Conductivity; }
+          double    GetExpansion(void) {return Expansion; }
           double    GetCost(void) {return Cost; }
   virtual int       NumParam(void) = 0;
   virtual void      GetParam(double *) = 0;

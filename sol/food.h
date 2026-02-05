@@ -122,6 +122,7 @@ class cFoodIntVec : public cFood
   void     Init(void);
   void     Init(const sInpSol&);
   void     Evaluate(void);
+  void     EvaluateLFP(void){ }
   void     Print(void);
   void     Write(std::ostream&);
   void     Copy(cOptSolution *);
@@ -150,6 +151,7 @@ class cFoodIntMat : public cFood
   void     Init(void);
   void     Init(const sInpSol&);
   void     Evaluate(void);
+  void     EvaluateLFP(void){ }
   void     Print(void);
   void     Write(std::ostream&);
   void     Copy(cOptSolution *);
@@ -181,6 +183,7 @@ class cFoodDblVec : public cFood
   void     Init(void);
   void     Init(const sInpSol&);
   void     Evaluate(void);
+  void     EvaluateLFP(void){ }
   void     Print(void);
   void     Write(std::ostream&);
   void     Copy(cOptSolution *);

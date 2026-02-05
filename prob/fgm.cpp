@@ -66,6 +66,9 @@ double      cFGM :: MinExp       = 0.00;
 double      cFGM :: MaxExp       = 10.00;
 cVector     cFGM :: FGIDMat;
 cVector     cFGM :: FGMMat;
+cVector     cFGM :: FGMAlp;
+cVector     cFGM :: FGMCond;
+cMatrix*    cFGM :: CP;
 
 // -------------------------------------------------------------------------
 // Public methods:
@@ -128,6 +131,8 @@ void cFGM :: LoadReadFunc(cInpMap &im)
   // Register material read functions.
   im.Insert("MATERIAL",makeRead(cMaterial :: ReadNumMat));
   im.Insert("MATERIAL.DENSITY",makeRead(cMaterial :: ReadDensity));
+  im.Insert("MATERIAL.CONDUCTIVITY",makeRead(cMaterial :: ReadConductivity));
+  im.Insert("MATERIAL.EXPANSION",makeRead(cMaterial :: ReadExpansion));
   im.Insert("MATERIAL.COST",makeRead(cMaterial :: ReadCost));
   im.Insert("MATERIAL.ISOTROPIC",makeRead(cMaterial :: ReadIso));
   im.Insert("MATERIAL.ORTHOTROPIC",makeRead(cMaterial :: ReadOrtho));
@@ -161,13 +166,18 @@ void cFGM :: ReadFGMaterials(istream &in)
   // Fill vector with material info
 
   FGMMat.Resize(NumFGMMat*3);
-
+  FGMAlp.Resize(NumFGMMat);
+  FGMCond.Resize(NumFGMMat);
+  
   for (int i = 0; i < NumFGMMat; i++)
   {
     cMaterial *mat = cMaterial::GetMaterial(FGIDMat[i]);
     double *paramtemp = new double[mat->NumParam( )];
     double dens       = mat -> GetDensity();
 
+    double alpha      = mat -> GetExpansion();
+    double cond       = mat -> GetConductivity();
+    
     mat->GetParam(paramtemp);
 
     eMatType matid  = mat->GetType( );
@@ -177,12 +187,16 @@ void cFGM :: ReadFGMaterials(istream &in)
        FGMMat[i*3]   = paramtemp[0];    // E1
        FGMMat[i*3+1] = paramtemp[1];    // nu
        FGMMat[i*3+2] = dens;            // density
+       FGMAlp[i]     = alpha;           // alpha
+       FGMCond[i]    = cond;            // conductivity
    }
    else
    {
        FGMMat[i*3]   = paramtemp[0];    // E1
        FGMMat[i*3+1] = paramtemp[3];    // nu
        FGMMat[i*3+2] = dens;            // density
+       FGMAlp[i]     = alpha;           // alpha
+       FGMCond[i]    = cond;            // conductivity
    }
 
    delete []paramtemp;
@@ -1140,6 +1154,9 @@ void cFGM :: Bspline(cVector V, int nt, cVector t, cVector& Vc)
     cVector C(nt);
 
     for (int i = 0; i < nt; i++){
+        if (t[i] == 0) t[i] = 1e-10;
+        if (t[i] == 1) t[i] = 1.0 - 1e-10;
+
         CurvePoint( n, p, U, V, t[i], C[i] );
         Vc[i] = C[i];
     }
@@ -1381,6 +1398,26 @@ void cFGM :: EffPropModel(eFGMModel ModelType, cVector Vcpg, cVector &Epg,
   VoigtDensity(Vcpg, Rhopg);
 }
 
+
+// ============================== FGMModel ===============================
+
+void cFGM :: EffCondModel(eFGMModel ModelType, cVector Vcpg, cVector &Kpg)
+{
+  if (ModelType == VOIGT)    // Rule of Mixtures
+  {
+      VoigtCond(Vcpg, Kpg);
+  }
+  else if (ModelType == MORI_TANAKA)
+  {
+      MoriTanakaCond(Vcpg, Kpg);
+  }
+  else
+  {
+      cout << "Unknown fgm model type." << endl;
+      exit(0);
+  }
+}
+
 // ============================== Voigt ===============================
 
 void cFGM :: Voigt(cVector Vcpg, cVector &Epg, cVector &Nupg, cVector &Kpg,
@@ -1434,6 +1471,26 @@ void cFGM :: VoigtDensity(cVector Vcpg, cVector &Rhopg)
     for (int i = 0; i < ngauss; i++)
     {
         Rhopg[i] = Rhom + (Rhoc - Rhom)*Vcpg[i];
+    }
+}
+
+// ========================== VoigtCond ============================
+
+void cFGM :: VoigtCond(cVector Vcpg, cVector &Kpg)
+{
+    //cout << "DENSITY" << endl;
+
+    int ngauss = Vcpg.Dim();
+    Kpg.Resize(ngauss);
+
+    double km = FGMCond[0];
+    double kc = FGMCond[1];
+
+    //FGMMat.Print();
+
+    for (int i = 0; i < ngauss; i++)
+    {
+        Kpg[i] = km*(1 - Vcpg[i]) + kc*Vcpg[i];
     }
 }
 
@@ -1499,6 +1556,29 @@ void cFGM :: MoriTanaka(cVector Vcpg, cVector &Epg, cVector &Nupg, cVector &Kpg,
     }
 }
 
+// ============================== MoriTanakaCond ===============================
+
+void cFGM :: MoriTanakaCond(cVector Vcpg, cVector &Kpg)
+{
+    int ngauss = Vcpg.Dim();
+    Kpg.Resize(ngauss);
+
+    double km = FGMCond[0];
+    double kc = FGMCond[1];
+
+    cVector Vmpg(ngauss);
+
+    for (int i = 0; i < ngauss; i++) Vmpg[i] = 1 - Vcpg[i];
+
+    for (int i = 0; i < ngauss; i++)
+    {
+        double term1, term2;
+        term1 = (kc - km)/(3*km);
+        term2 = 1 + Vmpg[i]*term1;
+        Kpg[i] = km + (kc - km)*(Vcpg[i]/term2);
+    }
+}
+
 // ============================== EvalVolumeRatio =================================
 
 void cFGM :: EvalVolumeRatio(double exp, double &v)
@@ -1552,36 +1632,37 @@ void cFGM :: EvalVolumeRatio(cVector Vcp, double &v)
     v = vtemp;
 }
 
+// ============================== ResizeCP =================================
+
+void cFGM :: ResizeCP(int Nbx, int Nby, int Nbz)
+{
+    CP = new cMatrix[Nbz];
+
+    for (int m = 0; m < Nbz; m++){
+        CP[m].Resize(Nbx, Nby);
+    }
+}
+
 // ============================== EvalVolumeRatio3D =================================
 
 void cFGM :: EvalVolumeRatio3D(cVector Vcp, double &v, int Nbx, int Nby, int Nbz)
 {
-    int ngauss = 5;
-
-    int ngaussthk = 2;
+    int ngauss = 3;
 
     cVector r, w;
     GaussPts1D(ngauss, r, w);
-
-    cVector rthk, wthk;
-    GaussPts1D(ngaussthk, rthk, wthk);
-
     //r.Print();
     //w.Print();
 
-    cMatrix *CP;
-
-    CP = new cMatrix[Nbz];
-
+    cMatrix auxM(Nbx,Nby);
     for (int m = 0; m < Nbz; m++){
-        cMatrix auxM(Nbx,Nby);
+        auxM.Zero( );
         for (int j = 0; j < Nby; j++){
             for (int i = 0; i < Nbx; i++)
             {
               auxM[j][i] = Vcp[m*Nbx*Nby + j*Nbx + i];
             }
         }
-        CP[m].Resize(Nbx, Nby);
         CP[m] = auxM;
     }
 
@@ -1641,8 +1722,7 @@ void cFGM :: EvalVolumeRatio3D(cVector Vcp, double &v, int Nbx, int Nby, int Nbz
         Uz[i] = Uz[i]*(lzupp - lzlow) + lzlow; // Knot vector defined between lzlow and lzupp
     }
 
-    int n    = ngauss;
-    int nthk = ngaussthk;
+    int n = ngauss;
 
     cVector V2(1);
     V2[0] = 0.0;
@@ -1653,12 +1733,12 @@ void cFGM :: EvalVolumeRatio3D(cVector Vcp, double &v, int Nbx, int Nby, int Nbz
     {
         for (int j = 0; j < n; j++)
         {
-            for (int k = 0; k < nthk; k++)
+            for (int k = 0; k < n; k++)
             {
                 cMatrix cdnt(3,1);
                 cdnt[0][0] = r[i];
                 cdnt[1][0] = r[j];
-                cdnt[2][0] = rthk[k];
+                cdnt[2][0] = r[k];
                 BsplineSol(CP, 1, cdnt, V2, Nbx, Nby, Nbz, px, py, pz, Ux, Uy, Uz);
                 Vcpg[i*n*n + j*n + k] = V2[0];
             }
@@ -1670,16 +1750,14 @@ void cFGM :: EvalVolumeRatio3D(cVector Vcp, double &v, int Nbx, int Nby, int Nbz
     {
         for (int j = 0; j < n; j++)
         {
-            for (int k = 0; k < nthk; k++)
+            for (int k = 0; k < n; k++)
             {
-                v += Vcpg[i*n*n + j*n + k]*w[i]*w[j]*wthk[k];
+                v += Vcpg[i*n*n + j*n + k]*w[i]*w[j]*w[k];
             }
         }
     }
 
     v = v/8.0;
-
-    delete [] CP;
 }
 
 // ===============================================================
@@ -1895,7 +1973,308 @@ void cFGM :: CalcMb(double t, cVector r, cVector w, cVector Rhopg, cMatrix &Mb)
   Mb[4][0] = I1;
 }
 
-// ============================== BsplineSol ===============================
+// ============================== HeatConductionFEM =================================
+
+void cFGM :: HeatConductionFEM(double h, double Ti, double Ts, int nt, cVector t, cVector Vc, cVector FEMParam, cVector &T)
+{
+    // Plate parameters
+
+    double xi = -h/2;
+    double xf =  h/2;
+
+    // Finite element discretization
+
+    int ne = FEMParam[0]; // Number of elements
+    int p  = FEMParam[1]; // Element degree (p = 1 or p = 2)
+
+    int nn;       // Number of nodes
+    int m;        // Number of element nodes
+    cMatrix Node; // Node data
+    cMatrix Elem; // Element data
+
+    Gen1DMesh(xi, xf, ne, p, nn, m, Node, Elem);
+
+    // Check if correct
+
+    for (int i = 0; i < nn; i++)
+    {
+        if (abs(Node[i][1] - (t[i]*h)) > 1e-8)
+        {
+            cout << "Finite element modeling (Heat Conduction): t coordinates should be the same as nodal coordinates.";
+            exit(0);
+        }
+    }
+
+    // Evaluate conductivity at nodes
+
+    cVector k(nt);
+    k.Zero( );
+
+    EffCondModel(FGMModel, Vc, k);
+
+    // Initialize nodal dofs (free = 0 and fixed = 1)
+
+    for (int i = 0; i < nn; i++) Node[i][2] = k[i];
+
+    cVector dofno(nn);
+    dofno.Zero( );
+
+    // Number the nodal dofs (fixed = 0 and free > 0)
+
+    int ndof = 0;
+
+    for (int i = 0; i < nn; i++)
+    {
+        if (dofno[i] == 0) // Free
+        {
+            ndof += 1;
+            dofno[i] = ndof;
+        }
+        else dofno[i] = 0;
+    }
+
+    // Assembly the global conductivity matrix
+
+    cMatrix K;
+    GlbCondMat(Elem, Node, ndof, dofno, K);
+
+    // Apply the prescribed temperatures using the penalty method.
+
+    double Kp = 1e15;            // Penalty factor
+    K[0][0] = Kp;
+    K[ndof-1][ndof-1] = Kp;
+
+    cVector f(ndof);
+    f.Zero( );
+    f[0] = Kp*Ti;                // Bottom surface
+    f[ndof-1] = Kp*Ts;           // Top surface
+
+    // Evaluate the nodal temperatures.
+
+    K.DecompLU( );
+
+
+    T.Resize(ndof);
+    T = f;
+    K.SolveLU(T);               // Solve [K]{T} = {f}
+}
+
+// ============================== HeatConductionFEM =================================
+
+void cFGM :: Gen1DMesh(double xi, double xf, int ne, int p, int &nn, int &m, cMatrix &Node, cMatrix &Elem)
+{
+    // Node generation.
+
+    nn = p*ne + 1;          // Number of mesh nodes
+    double L = xf - xi;     // Total length (thickness)
+    double dx = L/(nn - 1); // Node increment
+
+    Node.Resize(nn, 3);
+    Node.Zero( );
+
+    double x = xi;
+    for (int i = 0; i < nn; i++)
+    {
+        Node[i][0] = i + 1; // Node id
+        Node[i][1] = x;     // Node coordinate
+        x += dx;
+    }
+
+    // Element generation
+
+    m  = p + 1;             // Number of element nodes
+    int no = 1;             // Node id
+
+    Elem.Resize(ne, m + 1);
+    Elem.Zero( );
+
+    for (int i = 0; i < ne; i++)
+    {
+        Elem[i][0] = i + 1; // Element id
+        for (int j = 0; j < m; j++)
+        {
+            Elem[i][j+1] = no;
+            no += 1;
+        }
+        no -= 1;
+    }
+}
+
+// ============================== HeatConductionFEM =================================
+
+void cFGM :: GlbCondMat(cMatrix Elem, cMatrix Node, int ndof, cVector dofno, cMatrix &K)
+{
+    int ne   = Elem.NRow( );
+    int ncol = Elem.NCol( );
+    K.Resize(ndof, ndof);
+    K.Zero( );
+
+    for (int e = 0; e < ne; e++)
+    {
+        cVector elm(ncol);
+        for (int i = 0; i < ncol; i++) elm[i] = Elem[e][i];
+
+        cVector dofe;
+        int ndofe;
+        ElmDof(elm, dofno, ndofe, dofe);
+        cMatrix Ke;
+        ElmCondMat(elm, Node, Ke);
+        for (int i = 0; i < ndofe; i++)
+        {
+            int ii = dofe[i];
+            for (int j = 0; j < ndofe; j++)
+            {
+                int jj = dofe[j];
+                if (ii > 0 && jj > 0)
+                {
+                    K[ii-1][jj-1] = K[ii-1][jj-1] + Ke[i][j];
+                }
+            }
+        }
+    }
+}
+
+// ============================== HeatConductionFEM =================================
+
+void cFGM :: ElmDof(cVector elm, cVector dofno, int &ndofe, cVector &dofe)
+{
+    // Get problem data
+
+    int ndofn = 1;
+
+    int m = elm.Dim( ) - 1;
+
+    cVector node(m);
+    for (int i = 1; i < m+1; i++) node[i-1] = elm[i];
+
+    ndofe = m*ndofn;
+
+    dofe.Resize(ndofe);
+    dofe.Zero( );
+
+    int l = 0;
+    for (int i = 0; i < m; i++)
+    {
+        dofe[l] = dofno[node[i] - 1];
+        l += 1;
+    }
+}
+
+// ============================== HeatConductionFEM =================================
+
+void cFGM :: ElmCondMat(cVector elm, cMatrix Node, cMatrix &Ke)
+{
+  // Geometric data.
+
+  int m = elm.Dim( ) - 1;                         // Number of element nodes
+  cVector inc(m);
+  for (int i = 1; i < m+1; i++) inc[i-1] = elm[i];   // Element nodes
+
+  cVector x(m), kn(m);
+  x.Zero( );
+  kn.Zero( );
+
+  for (int i = 0; i < m; i++)
+  {
+      x[i]  = Node[inc[i]-1][1];
+      kn[i] = Node[inc[i]-1][2];
+  }
+
+  // Gauss points
+
+  int ng = m - 1;
+  cVector r, w;
+  GaussPts1D(ng, r, w);
+
+  // Conductivity matrix
+
+  int ndof = m;
+  Ke.Resize(ndof, ndof);
+  Ke.Zero( );
+  for (int i = 0; i < ng; i++)
+  {
+      cVector N, dNr, dNx;
+      N.Resize(m); dNr.Resize(m); dNx.Resize(m);
+      N.Zero( ); dNr.Zero( ); dNx.Zero( );
+      cMatrix B, Bt;
+      B.Resize(1, m); Bt.Resize(m, 1);
+      B.Zero( ); Bt.Zero( );
+      double J = 0;
+      double k, fac;
+      CalcN(m, r[i], N);           // Shape functions
+      CalcdNr(m, r[i], dNr);       // dNr/dr
+      CalcdNx(m, x, dNr, dNx, J);  // dNi/dx and Jacobian (J)
+      CalcMatB(m, N, dNx, B);      // [B]
+
+      B.Transp(Bt);
+      k = N*kn;
+
+      fac = k*J*w[i];
+
+      Ke = Ke + fac*(Bt*B);
+  }
+}
+
+// ============================== HeatConductionFEM =================================
+
+void cFGM :: CalcN(int m, double r, cVector &N)
+{
+  N.Resize(m);
+  N.Zero( );
+
+  if (m == 2)
+  {
+      N[0] = (1 - r)/2;
+      N[1] = (1 + r)/2;
+  }
+  else if (m == 3)
+  {
+      N[0] = r*(r - 1)/2;
+      N[1] = 1 - r*r;
+      N[2] = r*(r + 1)/2;
+  }
+}
+
+// ============================== HeatConductionFEM =================================
+
+void cFGM :: CalcdNr(int m, double r, cVector &dNr)
+{
+  dNr.Resize(m);
+  dNr.Zero( );
+
+  if (m == 2)
+  {
+      dNr[0] = -1.0/2.0;
+      dNr[1] =  1.0/2.0;
+  }
+  else if (m == 3)
+  {
+      dNr[0] = (2.0*r - 1)/2.0;
+      dNr[1] = -2*r;
+      dNr[2] = (2.0*r + 1)/2.0;
+  }
+}
+
+// ============================== HeatConductionFEM =================================
+
+void cFGM :: CalcdNx(int m, cVector x, cVector dNr, cVector &dNx, double &J)
+{
+  J = dNr*x;
+
+  dNx.Resize(m);
+  dNx.Zero( );
+
+  for (int i = 0; i < m; i++) dNx[i] = dNr[i]/J;
+}
+
+// ============================== HeatConductionFEM =================================
+
+void cFGM :: CalcMatB(int m, cVector N, cVector dNx, cMatrix &B)
+{
+  for (int i = 0; i < m; i++) B[0][i] = dNx[i];
+}
+
+// ============================== Bspline ===============================
 
 void cFGM :: BsplineSol(cMatrix *CP, int nt, cMatrix coord, cVector& Vc, int nbx, int nby, int nbz, int px, int py, int pz, cVector Ux, cVector Uy, cVector Uz)
 {
@@ -1908,7 +2287,7 @@ void cFGM :: BsplineSol(cMatrix *CP, int nt, cMatrix coord, cVector& Vc, int nbx
     }
 }
 
-// ============================== SolidPoint ===============================
+// ============================== FindSpan ===============================
 
 void cFGM :: SolidPoint(int nbx, int nby, int nbz, int px, int py, int pz, cVector Ux, cVector Uy, cVector Uz, cMatrix *CP, cMatrix coord, double &C)
 {

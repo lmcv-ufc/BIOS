@@ -175,6 +175,17 @@ void cSampIntVec :: Evaluate(void)
   // Evaluate the objective function and constraints.
   
   Prob->Evaluate(Var, Constr, Fobjs);
+  IsSampHF = 1;
+}
+
+// ============================== Evaluate =================================
+
+void cSampIntVec :: EvaluateLFP(void)
+{
+  // Evaluate the objective function and constraints.
+
+  Prob->EvaluateLFP(Var, Constr, Fobjs);
+  IsSampHF = 0;
 }
 
 // =============================== Print ===================================
@@ -437,6 +448,16 @@ void cSampIntMat :: Evaluate(void)
   // Evaluate the objective function and constraints.
   
   Prob->Evaluate(Var, Constr, Fobjs);
+  IsSampHF = 1;
+}
+// ============================== Evaluate =================================
+
+void cSampIntMat :: EvaluateLFP(void)
+{
+  // Evaluate the objective function and constraints.
+
+  Prob->EvaluateLFP(Var, Constr, Fobjs);
+  IsSampHF = 0;
 }
 
 // =============================== Print ===================================
@@ -684,8 +705,19 @@ void cSampDblVec :: Init(const cVector &ivar)
 void cSampDblVec :: Evaluate( )
 {
   // Evaluate the objective function and constraints.
-  
+
   Prob->Evaluate(Var, Constr, Fobjs);
+  IsSampHF = 1;
+}
+
+// ============================== Evaluate =================================
+
+void cSampDblVec :: EvaluateLFP( )
+{
+  // Evaluate the objective function and constraints.
+
+  Prob->EvaluateLFP(Var, Constr, Fobjs);
+  IsSampHF = 0;
 }
 
 // =============================== Print ===================================

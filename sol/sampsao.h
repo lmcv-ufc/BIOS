@@ -87,6 +87,7 @@ class cSampIntVec : public cSampSAO
   void          Init(const sInpSol&);
   void          Init(const cVector&);
   void          Evaluate(void);
+  void          EvaluateLFP(void);
   void          Print(void);
   void          Write(std::ostream&);
   void          Copy(cOptSolution*);
@@ -119,6 +120,7 @@ class cSampIntMat : public cSampSAO
   void          Init(const sInpSol&);
   void          Init(const cVector&);
   void          Evaluate(void);
+  void          EvaluateLFP(void);
   void          Print(void);
   void          Write(std::ostream&);
   void          Copy(cOptSolution*);
@@ -148,6 +150,7 @@ class cSampDblVec : public cSampSAO
                ~cSampDblVec(void);
   void          Init(const cVector&);
   void          Evaluate(void);
+  void          EvaluateLFP(void);
   void          Print(void);
   void          Write(std::ostream&);
   void          Copy(cOptSolution*);

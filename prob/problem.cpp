@@ -203,6 +203,30 @@ void cProblem :: Evaluate(cVector &var, cVector &constr, cVector &fobjs)
   exit(0);
 }
 
+// =============================== Evaluate ================================
+
+void cProblem :: EvaluateLFP(int *var, cVector &constr, cVector &fobjs)
+{
+  cout << "Error: Evaluate not defined for the low-fidelity problem\n";
+  exit(0);
+}
+
+// =============================== Evaluate ================================
+
+void cProblem :: EvaluateLFP(int **var, cVector &constr, cVector &fobjs)
+{
+  cout << "Error: Evaluate not defined for the low-fidelity problem\n";
+  exit(0);
+}
+
+// =============================== Evaluate ================================
+
+void cProblem :: EvaluateLFP(cVector &var, cVector &constr, cVector &fobjs)
+{
+  cout << "Error: Evaluate not defined for the low-fidelity problem\n";
+  exit(0);
+}
+
 // ========================= EvalExactConstraint ===========================
 
 void cProblem :: EvalExactConstraint(int index, cVector& x, double &c)

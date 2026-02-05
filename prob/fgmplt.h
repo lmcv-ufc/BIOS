@@ -89,62 +89,6 @@ class cSquarePlateBuckFGM : public cFGMPlate
 };
 
 // -------------------------------------------------------------------------
-// Definition of SquarePlateTridirBuckFGM class:
-//
-// Maximization of the buckling critical load of a FG square plate, under
-// a ceramic volume fraction-related constraint. In this problem, the
-// gradation is given in three directions [1].
-//
-// Refs:
-// [1] Do, D.; Nguyen-Xuan, H.; Jaehong, L. Material optimization of
-//     tri-directional functionally graded plates by using deep neural
-//     network and isogeometric multimesh design approach. Applied
-//     Mathematical Modelling, v. 87, 2020.
-//
-class cSquarePlateTridirBuckFGM : public cFGMPlate
-{
- protected:
-  void     Analysis(cVector, double &);
-
- public:
-           cSquarePlateTridirBuckFGM(void);
-          ~cSquarePlateTridirBuckFGM(void) { }
-  void     Evaluate(cVector & ,cVector &, cVector &);
-  void     EvalExactFobj(cVector&,double &){ };
-  void     EvalExactConstraint(int, cVector&, double &);
-  void     GetApproxObj(bool*o) { o[0] = 1; }
-  void     GetApproxConstr(bool*);
-};
-
-// -------------------------------------------------------------------------
-// Definition of SquarePlateTridirBuckFGM class:
-//
-// Maximization of the buckling critical load of a FG shell, under
-// a ceramic volume fraction-related constraint. In this problem, the
-// gradation is given in three directions.
-//
-class cShellTridirBuckFGM : public cFGMPlate
-{
- protected:
-  double   W_MObj;
-  void     Analysis(cVector, double &);
-
- public:
-  void     ReadW(std::istream&);
-
-           cShellTridirBuckFGM(void);
-          ~cShellTridirBuckFGM(void) { }
-  void     Evaluate(cVector & ,cVector &, cVector &);
-  void     EvalVolumeHole(cVector, double, cVector, double&);
-  void     EvalExactFobj(cVector&,double &){ };
-  void     EvalExactConstraint(int, cVector&, double &);
-  void     GetApproxObj(bool*o) { o[0] = 1; }
-  void     GetApproxConstr(bool*);
-  void     LoadReadFunc(cInpMap&);
-  void     Write(cVector&,ostream&);
-};
-
-// -------------------------------------------------------------------------
 // Definition of SquarePlateFreqFGM class:
 //
 // Maximization of the fundamental frequency of a FG square plate, under
@@ -281,7 +225,6 @@ class cScoordelisFGM : public cFGMPlate
 //     Structural and Multidisciplinary Optimization. Submitted for
 //     publication.
 //
-
 class cCircularPlateFreqFGM : public cFGMPlate
 {
  protected:
@@ -294,6 +237,125 @@ class cCircularPlateFreqFGM : public cFGMPlate
   void    EvalExactConstraint(int, cVector&, double &);
   void    GetApproxObj(bool*o) { o[0] = 1; }
   void    GetApproxConstr(bool*);
+};
+
+// -------------------------------------------------------------------------
+// Definition of SquarePlateMFBuckFGM class:
+//
+// Maximization of the buckling critical load of a FG square plate, under
+// a ceramic volume fraction-related constraint.
+// This problem is described and solved in Ribeiro et al. [1] using a
+// RBF-based SAO.
+// In this class, the problem is solved using a Multi-Fidelity approach.
+//
+// Refs:
+// [1] Ribeiro, L. G.; Maia, M. A.; Parente Jr., E.; Melo, A. M. C. Surrogate based
+//     optimization of functionally graded plates using radial basis functions.
+//     Composite Structures, v. 252, 2020.
+//
+class cSquarePlateMFBuckFGM : public cFGMPlate
+{
+ protected:
+  void     Analysis(cVector, double &, int);
+  double   CostMax;
+
+ public:
+           cSquarePlateMFBuckFGM(void);
+          ~cSquarePlateMFBuckFGM(void) { }
+  void     Evaluate(cVector & ,cVector &, cVector &);
+  void     EvaluateLFP(cVector & ,cVector &, cVector &);
+  void     EvalExactFobj(cVector&,double &){ };
+  void     EvalExactConstraint(int, cVector&, double &);
+  void     GetApproxObj(bool*o) { o[0] = 1; }
+  void     GetApproxConstr(bool*);
+};
+
+// -------------------------------------------------------------------------
+// Definition of SquarePlateTridirMFBuckFGM class:
+//
+// Maximization of the buckling critical load of a FG square plate, under
+// a ceramic volume fraction-related constraint. The gradation is tridirectional.
+// In this class, the problem is solved using a Multi-Fidelity approach.
+//
+class cSquarePlateTriDirMFBuckFGM : public cFGMPlate
+{
+ protected:
+  void     Analysis(cVector, double &, int);
+  double   CostMax;
+
+ public:
+           cSquarePlateTriDirMFBuckFGM(void);
+          ~cSquarePlateTriDirMFBuckFGM(void) { }
+  void     Evaluate(cVector & ,cVector &, cVector &);
+  void     EvaluateLFP(cVector & ,cVector &, cVector &);
+  void     EvalExactFobj(cVector&,double &){ };
+  void     EvalExactConstraint(int, cVector&, double &);
+  void     GetApproxObj(bool*o) { o[0] = 1; }
+  void     GetApproxConstr(bool*);
+};
+
+// -------------------------------------------------------------------------
+// Definition of SquarePlateMFBuckFGM class:
+//
+//
+class cSquarePlateCutOutFGM : public cFGMPlate
+{
+ protected:
+  void     Analysis(cVector, double &, int);
+  void     AnalysisC(cVector, double &, int);
+  void     AnalysisStress(cVector, double &, int);
+  double   FreqNatNormMin;
+  double   FreqNatNormMax;
+
+ public:
+           cSquarePlateCutOutFGM(void);
+          ~cSquarePlateCutOutFGM(void) { }
+  void     Evaluate(cVector & ,cVector &, cVector &);
+  void     EvaluateLFP(cVector & ,cVector &, cVector &);
+  void     EvalExactFobj(cVector&,double &){ };
+  void     EvalExactConstraint(int, cVector&, double &) { };
+  void     GetApproxObj(bool*o) { o[0] = 1; }
+  void     GetApproxConstr(bool*);
+};
+
+// -------------------------------------------------------------------------
+// Definition of ShallowShellMFThermBuckFGM class:
+//
+class cShallowShellMFThermBuckFGM : public cFGMPlate
+{
+ protected:
+  void     Analysis(cVector, double &, int);
+  double   CostMax;
+
+ public:
+           cShallowShellMFThermBuckFGM(void);
+          ~cShallowShellMFThermBuckFGM(void) { }
+  void     Evaluate(cVector & ,cVector &, cVector &);
+  void     EvaluateLFP(cVector & ,cVector &, cVector &);
+  void     EvalExactFobj(cVector&,double &){ };
+  void     EvalExactConstraint(int, cVector&, double &);
+  void     GetApproxObj(bool*o) { o[0] = 1; }
+  void     GetApproxConstr(bool*);
+};
+
+// -------------------------------------------------------------------------
+// Definition of SquarePlateMFBuckVSC class:
+//
+//
+class cSquarePlateMFBuckVSC : public cFGMPlate
+{
+ protected:
+  void     Analysis(cMatrix, double &, int);
+
+ public:
+           cSquarePlateMFBuckVSC(void);
+          ~cSquarePlateMFBuckVSC(void) { }
+  void     Evaluate(cVector & ,cVector &, cVector &);
+  void     EvaluateLFP(cVector & ,cVector &, cVector &);
+  void     EvalExactFobj(cVector&,double &){ };
+  void     EvalExactConstraint(int, cVector&, double &) { };
+  void     GetApproxObj(bool*o) { o[0] = 1; }
+  void     GetApproxConstr(bool*c) { };
 };
 
 #endif

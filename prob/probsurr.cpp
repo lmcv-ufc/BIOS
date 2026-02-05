@@ -134,8 +134,22 @@ void cProbSurr :: Evaluate(cVector &x, cVector &c, cVector &fobjs)
       c.Zero( );
     break;
 
+  case EVALUATE_VF_EXPECTED_IMPROVEMENT:
+    EvaluateVFEI(x, c, fobjs);
+    c.Zero( );
+  break;
+
+  case EVALUATE_VF_LOWER_CONFIDENCE_BOUND:
+    EvaluateVFLCB(x, c, fobjs);
+  break;
+
+  case EVALUATE_VF_PROBABILITY_IMPROVEMENT:
+    EvaluateVFPoI(x, c, fobjs);
+    c.Zero( );
+  break;
+
   case EVALUATE_ESTIMATED_QUADRATIC_ERROR:
-      EvaluateS2(x, c, fobjs);
+    EvaluateS2(x, c, fobjs);
     c.Zero( );
   break;
   }
@@ -277,6 +291,115 @@ void cProbSurr :: EvaluatePoI(cVector &x, cVector &c, cVector &fobjs)
   fobjs[0] = -poi;
 }
 
+// ============================= EvaluateSurr =============================
+
+void cProbSurr :: EvaluateVFLCB(cVector &x, cVector &c, cVector &fobjs)
+{
+    // Get normalized input variables.
+    cVector xn(NumVar);
+    HighFidelity->GetNormVar(x,xn);
+
+    // Get surrogate responses.
+    cVector y(AppOut->GetNumAppOut( ));
+    y[0] = SurMod->EvalVFLCB(xn);
+
+    // Objective function evaluation.
+
+    if (AppOut->GetNumAppObjFunc( ))
+      fobjs[0] = y[0];
+    else
+      HighFidelity->EvalExactFobj(x, fobjs[0]);
+
+    // Constraints evaluation.
+
+    for (int i = 0; i < AppOut->GetNumAppConstr( ) ; i++)
+      c[AppOut->GetAppConstrID(i)] = y[AppOut->GetAppConstrOutID(i)];
+
+    for (int i = 0; i < AppOut->GetNumExactConstr( ) ; i++)
+      HighFidelity->EvalExactConstraint(AppOut->GetExactConstrID(i),x,
+                                        c[AppOut->GetExactConstrID(i)]);
+}
+
+// ============================= Evaluate ================================
+
+void cProbSurr :: EvaluateVFEI(cVector &x, cVector &c, cVector &fobjs)
+{
+  // Auxiliary variables.
+  double ei;                  // Expected improvement.
+  double hof;                 // High-fidelity exact objective function.
+  double ci;                  // High-fidelity exact constraint.
+  int fid;
+
+  // Get normalized input variables.
+  cVector xn(NumVar);
+  HighFidelity->GetNormVar(x,xn);
+
+  // Objective function evaluation.
+
+  if (AppOut->GetNumAppObjFunc( ))
+    ei = SurMod->EvalVFExpImp(xn, currbest, fid);
+  else
+  {
+    HighFidelity->EvalExactFobj(x, hof);
+    ei = (hof < currbest) ? abs(currbest - hof) : 0.0;
+    fid = 2;
+  }
+
+  // Apply problem probability of feasibility (approximated constraints).
+  for (int i = 0; i < AppOut->GetNumAppConstr( ) ; i++)
+    ei *= GetConstraintFactor(xn, AppOut->GetAppConstrOutID(i), fid); //SurMod->EvalProbFeas(xn,AppOut->GetAppConstrOutID(i)); LEO
+
+  // Zero EI for violated extact constraints.
+  for (int i = 0; i < AppOut->GetNumExactConstr( ) ; i++)
+  {
+    HighFidelity->EvalExactConstraint(AppOut->GetExactConstrID(i),x,ci);
+    if (ci > 0.0) ei = 0.0;
+  }
+
+  ei += 1e-10;    // Avoid -infinity result.
+  ei = log10(ei);
+  fobjs[0] = -ei;
+}
+
+// ============================= Evaluate ================================
+
+void cProbSurr :: EvaluateVFPoI(cVector &x, cVector &c, cVector &fobjs)
+{
+  // Auxiliary variables.
+  double poi;                 // Probability of Improvement.
+  double hof;                 // High-fidelity exact objective function.
+  double ci;                  // High-fidelity exact constraint.
+  int fid;
+
+  // Get normalized input variables.
+  cVector xn(NumVar);
+  HighFidelity->GetNormVar(x,xn);
+
+  // Objective function evaluation.
+
+  if (AppOut->GetNumAppObjFunc( ))
+    poi = SurMod->EvalVFProbImp(xn,currbest, fid);
+  else
+  {
+    HighFidelity->EvalExactFobj(x, hof);
+    poi = (hof < currbest) ? 1.0 : 0.0;
+  }
+
+  // Apply problem probability of feasibility (approximated constraints).
+  for (int i = 0; i < AppOut->GetNumAppConstr( ) ; i++)
+    poi *= GetConstraintFactor(xn, AppOut->GetAppConstrOutID(i), fid); //SurMod->EvalProbFeas(xn,AppOut->GetAppConstrOutID(i)); LEO
+
+  // Zero EI for violated extact constraints.
+  for (int i = 0; i < AppOut->GetNumExactConstr( ) ; i++)
+  {
+    HighFidelity->EvalExactConstraint(AppOut->GetExactConstrID(i),x,ci);
+    if (ci > 0.0) poi = 0.0;
+  }
+
+  fobjs[0] = -poi;
+}
+
+
 // ============================= Evaluate ================================
 
 void cProbSurr :: EvaluateS2(cVector &x, cVector &c, cVector &fobjs)
@@ -346,6 +469,20 @@ void cProbSurr :: Evaluate(int *algvar, cVector &c, cVector &fobjs)
 
     case EVALUATE_PROBABILITY_IMPROVEMENT:
       EvaluatePoI(algvar, c, fobjs);
+      c.Zero( );
+    break;
+
+    case EVALUATE_VF_EXPECTED_IMPROVEMENT:
+      EvaluateVFEI(algvar, c, fobjs);
+      c.Zero( );
+    break;
+
+    case EVALUATE_VF_LOWER_CONFIDENCE_BOUND:
+      EvaluateVFLCB(algvar, c, fobjs);
+    break;
+
+    case EVALUATE_VF_PROBABILITY_IMPROVEMENT:
+      EvaluateVFPoI(algvar, c, fobjs);
       c.Zero( );
     break;
 
@@ -493,6 +630,114 @@ void cProbSurr :: EvaluatePoI(int *algvar, cVector &c, cVector &fobjs)
   fobjs[0] = -poi;
 }
 
+// ============================= EvaluateSurr =============================
+
+void cProbSurr :: EvaluateVFLCB(int *algvar, cVector &c, cVector &fobjs)
+{
+    // Get normalized input variables.
+    cVector xn(NumVar);
+    HighFidelity->GetNormVar(algvar,xn);
+
+    // Get surrogate responses.
+    cVector y(AppOut->GetNumAppOut( ));
+    y[0] = SurMod->EvalVFLCB(xn);
+
+    // Objective function evaluation.
+
+    if (AppOut->GetNumAppObjFunc( ))
+      fobjs[0] = y[0];
+    else
+      HighFidelity->EvalExactFobj(algvar, fobjs[0]);
+
+    // Constraints evaluation.
+
+    for (int i = 0; i < AppOut->GetNumAppConstr( ) ; i++)
+      c[AppOut->GetAppConstrID(i)] = y[AppOut->GetAppConstrOutID(i)];
+
+    for (int i = 0; i < AppOut->GetNumExactConstr( ) ; i++)
+      HighFidelity->EvalExactConstraint(AppOut->GetExactConstrID(i),algvar,
+                                        c[AppOut->GetExactConstrID(i)]);
+}
+
+// ============================= Evaluate ================================
+
+void cProbSurr :: EvaluateVFEI(int *algvar, cVector &c, cVector &fobjs)
+{
+  // Auxiliary variables.
+  double ei;                  // Expected improvement.
+  double hof;                 // High-fidelity exact objective function.
+  double ci;                  // High-fidelity exact constraint.
+  int fid;
+
+  // Get normalized input variables.
+  cVector xn(NumVar);
+  HighFidelity->GetNormVar(algvar,xn);
+
+  // Objective function evaluation.
+
+  if (AppOut->GetNumAppObjFunc( ))
+    ei = SurMod->EvalVFExpImp(xn, currbest, fid);
+  else
+  {
+    HighFidelity->EvalExactFobj(algvar, hof);
+    ei = (hof < currbest) ? abs(currbest - hof) : 0.0;
+    fid = 2;
+  }
+
+  // Apply problem probability of feasibility (approximated constraints).
+  for (int i = 0; i < AppOut->GetNumAppConstr( ) ; i++)
+    ei *= GetConstraintFactor(xn, AppOut->GetAppConstrOutID(i), fid); //SurMod->EvalProbFeas(xn,AppOut->GetAppConstrOutID(i)); LEO
+
+  // Zero EI for violated extact constraints.
+  for (int i = 0; i < AppOut->GetNumExactConstr( ) ; i++)
+  {
+    HighFidelity->EvalExactConstraint(AppOut->GetExactConstrID(i),algvar,ci);
+    if (ci > 0.0) ei = 0.0;
+  }
+
+  ei += 1e-10;    // Avoid -infinity result.
+  ei = log10(ei);
+  fobjs[0] = -ei;
+}
+
+// ============================= Evaluate ================================
+
+void cProbSurr :: EvaluateVFPoI(int *algvar, cVector &c, cVector &fobjs)
+{
+  // Auxiliary variables.
+  double poi;                 // Probability of Improvement.
+  double hof;                 // High-fidelity exact objective function.
+  double ci;                  // High-fidelity exact constraint.
+  int fid;
+
+  // Get normalized input variables.
+  cVector xn(NumVar);
+  HighFidelity->GetNormVar(algvar,xn);
+
+  // Objective function evaluation.
+
+  if (AppOut->GetNumAppObjFunc( ))
+    poi = SurMod->EvalVFProbImp(xn,currbest, fid);
+  else
+  {
+    HighFidelity->EvalExactFobj(algvar, hof);
+    poi = (hof < currbest) ? 1.0 : 0.0;
+  }
+
+  // Apply problem probability of feasibility (approximated constraints).
+  for (int i = 0; i < AppOut->GetNumAppConstr( ) ; i++)
+    poi *= GetConstraintFactor(xn, AppOut->GetAppConstrOutID(i), fid); //SurMod->EvalProbFeas(xn,AppOut->GetAppConstrOutID(i)); LEO
+
+  // Zero EI for violated extact constraints.
+  for (int i = 0; i < AppOut->GetNumExactConstr( ) ; i++)
+  {
+    HighFidelity->EvalExactConstraint(AppOut->GetExactConstrID(i),algvar,ci);
+    if (ci > 0.0) poi = 0.0;
+  }
+
+  fobjs[0] = -poi;
+}
+
 // ============================= Evaluate ================================
 
 void cProbSurr :: EvaluateS2(int *algvar, cVector &c, cVector &fobjs)
@@ -552,6 +797,20 @@ void cProbSurr :: Evaluate(int **algvar, cVector &c, cVector &fobjs)
 
     case EVALUATE_PROBABILITY_IMPROVEMENT:
       EvaluatePoI(algvar, c, fobjs);
+      c.Zero( );
+    break;
+
+    case EVALUATE_VF_EXPECTED_IMPROVEMENT:
+      EvaluateVFEI(algvar, c, fobjs);
+      c.Zero( );
+    break;
+
+    case EVALUATE_VF_LOWER_CONFIDENCE_BOUND:
+      EvaluateVFLCB(algvar, c, fobjs);
+    break;
+
+    case EVALUATE_VF_PROBABILITY_IMPROVEMENT:
+      EvaluateVFPoI(algvar, c, fobjs);
       c.Zero( );
     break;
 
@@ -635,16 +894,18 @@ void cProbSurr :: EvaluateEI(int **algvar, cVector &c, cVector &fobjs)
 
   HighFidelity->GetNormVar(algvar,xn);
 
-  /*for (int i = 0; i < NumRow; i++)
+  /*cout << "NVE: " << NumVarEff << endl;
+  cout << "mat:" << endl;
+  for (int i = 0; i < 3; i++)
   {
-      for (int j = 0; j < NumCol; j++)
-      {
-          cout << algvar[i][j] << "  ";
-      }
+      for (int j = 0; j < 5; j++)
+          cout << algvar[i][j] << " ";
       cout << endl;
   }
 
-  xn.Print( );*/
+  cout << "vec: ";
+  xn.Print( );
+  exit(0);*/
 
   // Objective function evaluation.
 
@@ -709,6 +970,114 @@ void cProbSurr :: EvaluatePoI(int **algvar, cVector &c, cVector &fobjs)
   fobjs[0] = -poi;
 }
 
+// ============================= EvaluateSurr =============================
+
+void cProbSurr :: EvaluateVFLCB(int **algvar, cVector &c, cVector &fobjs)
+{
+    // Get normalized input variables.
+    cVector xn(NumVar);
+    HighFidelity->GetNormVar(algvar,xn);
+
+    // Get surrogate responses.
+    cVector y(AppOut->GetNumAppOut( ));
+    y[0] = SurMod->EvalVFLCB(xn);
+
+    // Objective function evaluation.
+
+    if (AppOut->GetNumAppObjFunc( ))
+      fobjs[0] = y[0];
+    else
+      HighFidelity->EvalExactFobj(algvar, fobjs[0]);
+
+    // Constraints evaluation.
+
+    for (int i = 0; i < AppOut->GetNumAppConstr( ) ; i++)
+      c[AppOut->GetAppConstrID(i)] = y[AppOut->GetAppConstrOutID(i)];
+
+    for (int i = 0; i < AppOut->GetNumExactConstr( ) ; i++)
+      HighFidelity->EvalExactConstraint(AppOut->GetExactConstrID(i),algvar,
+                                        c[AppOut->GetExactConstrID(i)]);
+}
+
+// ============================= Evaluate ================================
+
+void cProbSurr :: EvaluateVFEI(int **algvar, cVector &c, cVector &fobjs)
+{
+  // Auxiliary variables.
+  double ei;                  // Expected improvement.
+  double hof;                 // High-fidelity exact objective function.
+  double ci;                  // High-fidelity exact constraint.
+  int fid;
+
+  // Get normalized input variables.
+  cVector xn(NumVar);
+  HighFidelity->GetNormVar(algvar,xn);
+
+  // Objective function evaluation.
+
+  if (AppOut->GetNumAppObjFunc( ))
+    ei = SurMod->EvalVFExpImp(xn, currbest, fid);
+  else
+  {
+    HighFidelity->EvalExactFobj(algvar, hof);
+    ei = (hof < currbest) ? abs(currbest - hof) : 0.0;
+    fid = 2;
+  }
+
+  // Apply problem probability of feasibility (approximated constraints).
+  for (int i = 0; i < AppOut->GetNumAppConstr( ) ; i++)
+    ei *= GetConstraintFactor(xn, AppOut->GetAppConstrOutID(i), fid); //SurMod->EvalProbFeas(xn,AppOut->GetAppConstrOutID(i)); LEO
+
+  // Zero EI for violated extact constraints.
+  for (int i = 0; i < AppOut->GetNumExactConstr( ) ; i++)
+  {
+    HighFidelity->EvalExactConstraint(AppOut->GetExactConstrID(i),algvar,ci);
+    if (ci > 0.0) ei = 0.0;
+  }
+
+  ei += 1e-10;    // Avoid -infinity result.
+  ei = log10(ei);
+  fobjs[0] = -ei;
+}
+
+// ============================= Evaluate ================================
+
+void cProbSurr :: EvaluateVFPoI(int **algvar, cVector &c, cVector &fobjs)
+{
+  // Auxiliary variables.
+  double poi;                 // Probability of Improvement.
+  double hof;                 // High-fidelity exact objective function.
+  double ci;                  // High-fidelity exact constraint.
+  int fid;
+
+  // Get normalized input variables.
+  cVector xn(NumVar);
+  HighFidelity->GetNormVar(algvar,xn);
+
+  // Objective function evaluation.
+
+  if (AppOut->GetNumAppObjFunc( ))
+    poi = SurMod->EvalVFProbImp(xn,currbest, fid);
+  else
+  {
+    HighFidelity->EvalExactFobj(algvar, hof);
+    poi = (hof < currbest) ? 1.0 : 0.0;
+  }
+
+  // Apply problem probability of feasibility (approximated constraints).
+  for (int i = 0; i < AppOut->GetNumAppConstr( ) ; i++)
+    poi *= GetConstraintFactor(xn, AppOut->GetAppConstrOutID(i), fid); //SurMod->EvalProbFeas(xn,AppOut->GetAppConstrOutID(i)); LEO
+
+  // Zero EI for violated extact constraints.
+  for (int i = 0; i < AppOut->GetNumExactConstr( ) ; i++)
+  {
+    HighFidelity->EvalExactConstraint(AppOut->GetExactConstrID(i),algvar,ci);
+    if (ci > 0.0) poi = 0.0;
+  }
+
+  fobjs[0] = -poi;
+}
+
 // ============================= Evaluate ================================
 
 void cProbSurr :: EvaluateS2(int **algvar, cVector &c, cVector &fobjs)
@@ -758,6 +1127,31 @@ double cProbSurr :: GetConstraintFactor(cVector x, int out)
       f = SurMod->EvalProbFeasTutum(x, out);
   else if (ConstrMethod == POF_BAGHERI)
       f = SurMod->EvalProbFeasBagheri(x, out);
+  else if (ConstrMethod == POF_SOHST)
+      f = SurMod->EvalProbFeasSohst(x, out);
+  else{
+      cout << "Constraint handling function not defined." << endl;
+      exit(0);
+  }
+
+  return f;
+}
+
+// ============================= GetConstraintFactor ================================
+// LEO
+double cProbSurr :: GetConstraintFactor(cVector x, int out, int fid)
+{
+  double f;
+  if (ConstrMethod == INFINITE_PEN)
+      f = SurMod->EvalInfPen(x, out, fid);
+  else if (ConstrMethod == POF_SCHONLAU)
+      f = SurMod->EvalProbFeas(x, out, fid);
+  else if (ConstrMethod == POF_TUTUM)
+      f = SurMod->EvalProbFeasTutum(x, out, fid);
+  else if (ConstrMethod == POF_BAGHERI)
+      f = SurMod->EvalProbFeasBagheri(x, out, fid);
+  else if (ConstrMethod == POF_SOHST)
+      f = SurMod->EvalProbFeasSohst(x, out, fid);
   else{
       cout << "Constraint handling function not defined." << endl;
       exit(0);

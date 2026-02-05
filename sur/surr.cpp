@@ -35,7 +35,7 @@
 #include <fstream>
 #include <iomanip>
 #include <vector>
-//#include <bits/stdc++.h>
+#include <bits/stdc++.h>
 
 #include "surr.h"
 #include "vec.h"
@@ -299,6 +299,14 @@ void cSURR :: Evaluate(cVector &x, cVector &y, vector<cVector> *sampx)
 
 // =============================== Evaluate ================================
 
+void cSURR :: EvaluateLFM(cVector &x, cVector &y, vector<cVector> *sampx)
+{
+  cout << "Error: Low-fidely model (Sur) evaluate not defined\n";
+  exit(0);
+}
+
+// =============================== Evaluate ================================
+
 double cSURR :: EvalExpImp(cVector &x, double ybest)
 {
   cout << "Error: Evaluation of Expected Improvement not defined\n";
@@ -323,6 +331,46 @@ double cSURR :: EvalLCB(cVector &x)
 
 // =============================== Evaluate ================================
 
+double cSURR :: EvalVFExpImp(cVector &x, double ybest)
+{
+  cout << "Error: Evaluation of Variable-Fidelity Expected Improvement not defined (only available for HK model)\n";
+  exit(0);
+}
+
+// =============================== Evaluate ================================
+
+double cSURR :: EvalVFProbImp(cVector &x, double ybest)
+{
+  cout << "Error: Evaluation of Variable-Fidelity Probability of Improvement not defined (only available for HK model)\n";
+  exit(0);
+}
+
+// =============================== Evaluate ================================
+
+double cSURR :: EvalVFExpImp(cVector &x, double ybest, int &fid)
+{
+  cout << "Error: Evaluation of Variable-Fidelity Expected Improvement not defined (only available for HK model)\n";
+  exit(0);
+}
+
+// =============================== Evaluate ================================
+
+double cSURR :: EvalVFProbImp(cVector &x, double ybest, int &fid)
+{
+  cout << "Error: Evaluation of Variable-Fidelity Probability of Improvement not defined (only available for HK model)\n";
+  exit(0);
+}
+
+// =============================== Evaluate ================================
+
+double cSURR :: EvalVFLCB(cVector &x)
+{
+  cout << "Error: Evaluation of Variable-Fidelity Lower Confidence Bound not defined (only available for HK model)\n";
+  exit(0);
+}
+
+// =============================== Evaluate ================================
+
 double cSURR :: Eval(cVector, int)
 {
   cout << "Error: Evaluation of Likelihood not defined\n";
@@ -332,6 +380,14 @@ double cSURR :: Eval(cVector, int)
 // =============================== Evaluate ================================
 
 double cSURR :: EvalConstraintPF(cVector &, int, double)
+{
+  cout << "Error: Evaluation of a constraint's Probability of Feasibility not defined\n";
+  exit(0);
+}
+
+// =============================== Evaluate ================================
+
+double cSURR :: EvalConstraintPF(cVector &, int, int, double)
 {
   cout << "Error: Evaluation of a constraint's Probability of Feasibility not defined\n";
   exit(0);

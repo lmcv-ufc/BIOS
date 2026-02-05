@@ -133,6 +133,14 @@ struct sSampData
   cVectorVec   ValSampleX;   // Validation Sample points (NumSample x NumVar)
   cVectorVec   ValSampleY;   // Validation Sample responses (NumSample x NumOut)
 
+  // For multi-fidelity models
+
+  int          NumSampleLF;    // Number of samples from a low-fidelity source
+  cVectorVec   SampleXLF;      // Sample points (NumSample x NumVar) from the low-fidelity source
+  cVectorVec   SampleYLF;      // Sample responses (NumSample x NumOut) from the low-fidelity source
+
+
+ // Vai sair daqui!
   int          NumApproxOut; // Number of approximated outputs.
   bool*        ApproxOut;    // Vector of approximated output flags.
 
@@ -156,6 +164,7 @@ istream& operator>> (istream&,sSampData&);
 class cSURR
 {
  protected:
+  bool              Update;
   sSampData         sdata;
   cMatrix*          Hmat;
   cMatrix*          Hmatdc;
@@ -170,6 +179,7 @@ class cSURR
           cVector  Mu;            // Stores the Mean; used on statistical infill methods
           double   WEI;           // Stores the w factor, used for weighted Expected Improvement (WEI)
           double   Beta;          // Stores the beta factor, used for Lower Confidence Bound (LCB)
+          double   nFacSohst;
 
 
                    cSURR(void);
@@ -181,31 +191,56 @@ class cSURR
           void     GetApproxOut(bool* &ap)                { ap = sdata.ApproxOut;      }
           void     GetSampleX(vector<cVector> &sx)        { sx = sdata.SampleX;        }
           void     GetSampleY(vector<cVector> &sy)        { sy = sdata.SampleY;        }
-          void     GetValSampleX(vector<cVector> &vsx)    { vsx = sdata.ValSampleX;    }
+          void     GetSampleXLF(vector<cVector> &sx) { sx = sdata.SampleXLF; }
+          void     GetSampleYLF(vector<cVector> &sy) { sy = sdata.SampleYLF; }
+		  void     GetValSampleX(vector<cVector> &vsx)    { vsx = sdata.ValSampleX;    }
           void     GetValSampleY(vector<cVector> &vsy)    { vsy = sdata.ValSampleY;    }
           void     GetExactConst(vector<cVector> &cy)     { cy = sdata.ExactCons;      }
 		  void     GetExactFobj(vector<cVector> &fobjsex) { fobjsex = sdata.ExactFobj; }
           void     GetNumSample(int &ns)                  { ns  = sdata.NumSample;     }
-          void     GetNumOut(int &no)                     { no  = sdata.NumOut;        }
+          void     GetNumSampleLF(int &ns)             { ns  = sdata.NumSampleLF;  }
+		  void     GetNumOut(int &no)                  { no  = sdata.NumOut;     }
+          void     GetNumVar(int &nv)                  { nv  = sdata.NumVar;     }
+		  void     GetBestFeasibleSample(cVector &, cVector &, int, int, cVector &);
 
-		  void     SetWEI(double w)  { WEI = w;       }
-          void     SetBeta(double b) { Beta = b;      }
+          void     SetWEI(double w)       { WEI       = w;       }
+          void     SetBeta(double b)      { Beta      = b;      }
+          void     SetNFacSohst(double n) { nFacSohst = n;      }
 
  static eSigmaType GetSigtype(void) { return Sigtype; }
 		  bool     IsInSample(cVector &, double);
 
  const sSampData&  GetSampData(void) { return sdata; }
+ virtual  void     EvaluateLFM(cVector&, cVector&, vector<cVector> *vec = 0);
  virtual  void     Evaluate(cVector&, cVector&, vector<cVector> *vec = 0);
+ virtual  cVector  GetBestTheta(int out)  {return 1;}
+ virtual  cVector  GetBestThetad(int out) {return 1;}
  virtual  double   EvalExpImp(cVector &,double);
  virtual  double   EvalProbImp(cVector &,double);
  virtual  double   EvalLCB(cVector &);
+ virtual  double   EvalVFExpImp(cVector &,double);
+ virtual  double   EvalVFProbImp(cVector &,double);
+ virtual  double   EvalVFLCB(cVector &);
  virtual  double   Eval(cVector, int);
+ virtual  double   EvalVFExpImp(cVector &,double,int&);
+ virtual  double   EvalVFProbImp(cVector &,double,int&);
+
  virtual  double   EvalConstraintPF(cVector &, int, double);
  virtual  double   EvalInfPen(cVector &, int, double tol = 1e-6){ }
  virtual  double   EvalProbFeas(cVector &, int, double tol = 1e-6){ }
  virtual  double   EvalProbFeasTutum(cVector &, int, double tol = 1e-6){ }
  virtual  double   EvalProbFeasBagheri(cVector &, int, double tol = 1e-6){ }
+ virtual  double   EvalProbFeasSohst(cVector &, int, double tol = 1e-6){ }
+
+ virtual  double   EvalConstraintPF(cVector &, int,int, double);
+ virtual  double   EvalInfPen(cVector &, int,int, double tol = 1e-6){ }
+ virtual  double   EvalProbFeas(cVector &, int,int, double tol = 1e-6){ }
+ virtual  double   EvalProbFeasTutum(cVector &, int,int, double tol = 1e-6){ }
+ virtual  double   EvalProbFeasBagheri(cVector &, int,int, double tol = 1e-6){ }
+ virtual  double   EvalProbFeasSohst(cVector &, int,int, double tol = 1e-6){ }
+
  virtual  double   SSqrSur(cVector, int);
+ virtual  double   SSqrSur(cVector, cVector&, cVector&, int){ }
           void     InfillCriteria(eInfillType, cVector &, cRBF*);
 };
 

@@ -97,9 +97,10 @@ class cGroup
                 cGroup(void) { }
                 cGroup(int, cProblem *);
   virtual      ~cGroup(void);
+  virtual void  GetNumEval(int &, int &) { }
   int           GetSize(void) { return GroupSize; }	      
   void          Sort(void);
-  cOptSolution* BestSol(void);
+  virtual cOptSolution* BestSol(void);
   cOptSolution* WorstSol(void);
   cOptSolution* MeanSol(void);
 
@@ -172,7 +173,9 @@ class cSampSet : public cGroup
                 cSampSet(int, eSolType, cProblem *, sProbAppOut&);
                ~cSampSet(void);
   cSampSAO*   operator[](int i) {return (cSampSAO*) SolVec[i];}
+  cOptSolution* BestSol(void);
   cSampSAO*   BestFeasible(void);
+  void        GetNumEval(int &, int &);
   cSampSAO*   PushBack(cVector&);
 };
 

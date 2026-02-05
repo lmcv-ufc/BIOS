@@ -151,6 +151,7 @@ class cPartIntVec : public cParticle
   void          Init(const sInpSol&);
   void          Init(const cVector&);
   void          Evaluate(void);
+  void          EvaluateLFP(void){ }
   void          Print(void);
   void          Write(std::ostream&);
   void          Copy(cOptSolution*);
@@ -187,6 +188,7 @@ class cPartIntMat : public cParticle
   void          Init(const sInpSol&);
   void          Init(const cVector&);
   void          Evaluate(void);
+  void          EvaluateLFP(void){ }
   void          Print(void);
   void          Write(std::ostream&);
   void          Copy(cOptSolution*);
@@ -226,6 +228,7 @@ class cPartDblVec : public cParticle
   void          Init(const sInpSol&);
   void          Init(const cVector&);
   void          Evaluate(void);
+  void          EvaluateLFP(void){ }
   void          Print(void);
   void          Write(std::ostream&);
   void          Copy(cOptSolution *);

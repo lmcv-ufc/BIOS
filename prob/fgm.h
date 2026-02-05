@@ -72,14 +72,17 @@ typedef enum
 class cFGM : public cProblem
 {
  protected:
-  static  eFGMModel   FGMModel;       // FGM model used to define eff. properties
-  static  eFGMVolDist FGMVolDist;     // FGM volume fraction distribution
-  static  int         NumFGMMat;      // Number of FGM materials
-  static  cVector     FGMMat;            // Material list
-  static  cVector     FGIDMat;    // Custom angle values
+  static  eFGMModel   FGMModel;      // FGM model used to define eff. properties
+  static  eFGMVolDist FGMVolDist;    // FGM volume fraction distribution
+  static  int         NumFGMMat;     // Number of FGM materials
+  static  cVector     FGMMat;        // Material list
+  static  cVector     FGMAlp;        // Expansion factor list
+  static  cVector     FGMCond;       // Conductivity list
+  static  cVector     FGIDMat;       // Custom angle values
   static  double      dExp;          // Power-law exponent variation
   static  double      MinExp;        // Minimum power-law exponent
   static  double      MaxExp;        // Maximum power-law exponent
+  static  cMatrix    *CP;
           int         NumCP;         // Number of control points; If power-law/sygmoide/exponential, NumCP = 1;
           double      dThk;          // Thickness variation
           double      MinThk;        // Minimum thickness
@@ -90,7 +93,6 @@ class cFGM : public cProblem
   cVector *List;    // Lists of discrete values for each variable
   double  *Low;
   double  *Upp;
-
 
  protected:
           void     GaussPts1D(int, cVector &, cVector &);
@@ -107,14 +109,22 @@ class cFGM : public cProblem
           void     CurveDerivs(int, int, cVector, cVector, double, cVector&);
           void     BSplineDer(cVector, int, cVector, cVector&);
           void     DersBasisFuns(int, double, int, int, cVector, cMatrix &);
+
+          void     BsplineSol(cMatrix *, int, cMatrix, cVector&, int, int, int, int, int, int, cVector, cVector, cVector);
+          void     SolidPoint(int, int, int, int, int, int, cVector, cVector, cVector, cMatrix*, cMatrix, double&);
+
           void     EffPropModel(eFGMModel, cVector, cVector &, cVector &, cVector &, cVector &, cVector &);
+          void     EffCondModel(eFGMModel, cVector, cVector &);
           void     Voigt(cVector, cVector &, cVector &, cVector &, cVector &);
+          void     VoigtCond(cVector, cVector &);
           void     VoigtDensity(cVector, cVector &);
           void     Reuss(cVector, cVector &, cVector &, cVector &, cVector &);
           void     MoriTanaka(cVector, cVector &, cVector &, cVector &, cVector &);
+          void     MoriTanakaCond(cVector, cVector &);
           void     EvalVolumeRatio(double, double &);
           void     EvalVolumeRatio(cVector, double &);
           void     EvalVolumeRatio3D(cVector, double &, int, int, int);
+          void     ResizeCP(int, int, int);
           void     EvalDens(double, double &);
           void     EvalDens(cVector, double &);
           void     EvalCost(double, double &);
@@ -124,8 +134,15 @@ class cFGM : public cProblem
           void     QMatrix(double, double, cMatrix &, cMatrix &);
  virtual  void     PrintResult(int**, ostream&);
 
-          void     BsplineSol(cMatrix *, int, cMatrix, cVector&, int, int, int, int, int, int, cVector, cVector, cVector);
-          void     SolidPoint(int, int, int, int, int, int, cVector, cVector, cVector, cMatrix*, cMatrix, double&);
+          void   HeatConductionFEM(double, double, double, int, cVector, cVector, cVector, cVector&);
+          void   Gen1DMesh(double, double, int, int, int&, int&, cMatrix&, cMatrix&);
+          void   GlbCondMat(cMatrix, cMatrix, int, cVector, cMatrix&);
+          void   ElmCondMat(cVector, cMatrix, cMatrix&);
+          void   ElmDof(cVector, cVector, int&, cVector&);
+          void   CalcN(int, double, cVector&);
+          void   CalcdNr(int, double, cVector&);
+          void   CalcdNx(int, cVector, cVector, cVector&, double&);
+          void   CalcMatB(int, cVector, cVector, cMatrix&);
 
  public:
           void     ReadFGMaterials(std::istream&);

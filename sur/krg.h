@@ -93,6 +93,7 @@
 #include "benchmark.h"
 #include "optalg.h"
 #include "stdpso.h"
+#include "stdde.h"
 
 using namespace std;
 
@@ -122,6 +123,9 @@ class cKRG : public cSURR
   int               SubMaxGen;
   double            SubTolViol;
   double            SubMutProb;
+  int               SubStallGen;
+  eDifType          SubDifType;
+  eSwaTopType       SubTopology;
   cOptAlgorithm     *SubAlgType;
   eSolType          SubSolType;
   bool*             ApproxC;
@@ -130,8 +134,10 @@ class cKRG : public cSURR
  public:
            vector<double>   SSqr;
            vector<cVector>   BestTheta;
+           vector<cVector>   BestThetaOld;
            vector<double>    Prediction;
            vector<cVector>   Weight;
+           vector<cVector>   Weight1;
            bool              c = true;
 
            double            HPlow;
@@ -157,6 +163,7 @@ class cKRG : public cSURR
           void   UpdatePos(int, double, double, cMatrix &, cMatrix &);
           void   MaxLikelihood(cVector &, cKRG*);
         double   Likelihood(vector<cVector> &, cVector &, int);
+        cVector  GetBestTheta(int out)  {return BestTheta[out];}
 
         void     MuSur(double &, int, cMatrix &);
         void     SigmaSqrSur(double &, double &, int, cMatrix &);
@@ -173,6 +180,7 @@ class cKRG : public cSURR
           double   EvalProbFeas(cVector&,int,double tol = 1e-6);         // LEO
           double   EvalProbFeasTutum(cVector&,int,double tol = 1e-6);    // LEO
           double   EvalProbFeasBagheri(cVector&,int,double tol = 1e-6);  // LEO
+          double   EvalProbFeasSohst(cVector&,int,double tol = 1e-6);  // LEO
 };
 
 #endif

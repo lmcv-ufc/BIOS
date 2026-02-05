@@ -187,6 +187,70 @@ void cMaterial :: ReadDensity(istream &in)
  }
 }
 
+// =============================== ReadDensity =============================
+
+void cMaterial :: ReadConductivity(istream &in)
+{
+  int n;
+
+  if (!(in >> n))
+  {
+    cout << "Error on reading number of conductivities!" << endl;
+    exit(0);
+  }
+
+  int label;
+  double cond;
+  for (int i = 0; i < n; i++)
+  {
+    if (!(in >> label) || !(in >> cond))
+    {
+      cout << "Error on reading conductivity " << i+1 << "!" << endl;
+      exit(0);
+    }
+
+    cMaterial *pcMat = GetMaterial(label);
+    if (!pcMat)
+    {
+      cout << "Error on reading conductivity " << i+1 << "!" << endl;
+      exit(0);
+    }
+    pcMat->Conductivity = cond;
+ }
+}
+
+// =============================== ReadDensity =============================
+
+void cMaterial :: ReadExpansion(istream &in)
+{
+  int n;
+
+  if (!(in >> n))
+  {
+    cout << "Error on reading number of expansion factor!" << endl;
+    exit(0);
+  }
+
+  int label;
+  double exp;
+  for (int i = 0; i < n; i++)
+  {
+    if (!(in >> label) || !(in >> exp))
+    {
+      cout << "Error on reading expansion factor" << i+1 << "!" << endl;
+      exit(0);
+    }
+
+    cMaterial *pcMat = GetMaterial(label);
+    if (!pcMat)
+    {
+      cout << "Error on reading density factor" << i+1 << "!" << endl;
+      exit(0);
+    }
+    pcMat->Expansion = exp;
+ }
+}
+
 // =============================== ReadCost ================================
 
 void cMaterial :: ReadCost(istream &in)

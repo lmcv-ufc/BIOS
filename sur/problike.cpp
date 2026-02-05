@@ -35,13 +35,15 @@
 #include <fstream>
 #include <iomanip>
 #include <vector>
-//#include <bits/stdc++.h>
+#include <bits/stdc++.h>
 
 #ifdef _OMP_
 #include "omp.h"
 #endif
 
 #include "krg.h"
+#include "cokrg.h"
+#include "hierkrg.h"
 #include "vec.h"
 #include "mat.h"
 #include "utl.h"
@@ -60,7 +62,9 @@ cProbLikelihood :: cProbLikelihood(cKRG *SurMod, int out)
   NumConstr = 0;
   NumObj    = 1;
 
-  Surr = SurMod;
+  Surr   = SurMod;
+  SurrCK = 0;
+  SurrHK = 0;
 
   Low = new double[NumVar];
   Upp = new double[NumVar];
@@ -72,16 +76,104 @@ cProbLikelihood :: cProbLikelihood(cKRG *SurMod, int out)
   }
 
   Out = out;
+
+  EvalType = BASIC;
 }
 
+// ============================== ProbLikelihood ================================
+
+cProbLikelihood :: cProbLikelihood(cCOKRG *SurMod, int out, eProbLikeType plt)
+{
+  EvalType = plt;
+
+  Surr   = 0;
+  SurrCK = SurMod;
+  SurrHK = 0;
+
+  NumVar    = SurrCK->GetSampData( ).NumVar;
+  NumConstr = 0;
+  NumObj    = 1;
+
+  if (EvalType == DIFFMODELFIT)
+  {
+      NumVar += 1;
+  }
+
+  Low = new double[NumVar];
+  Upp = new double[NumVar];
+
+  for (int i = 0; i < NumVar; i++)
+  {
+    if (EvalType == BASIC || i < (NumVar - 1))
+    {
+        Low[i] = SurrCK->HPlow;
+        Upp[i] = SurrCK->HPupp;
+    }
+    else
+    {
+        Low[i] = SurrCK->rhoLow;
+        Upp[i] = SurrCK->rhoUpp;
+    }
+  }
+
+  Out = out;
+}
+
+// ============================== ProbLikelihood ================================
+
+cProbLikelihood :: cProbLikelihood(cHIERKRG *SurMod, int out, eProbLikeType plt)
+{
+  EvalType = plt;
+
+  Surr   = 0;
+  SurrCK = 0;
+  SurrHK = SurMod;
+
+  NumVar    = SurrHK->GetSampData( ).NumVar;
+  NumConstr = 0;
+  NumObj    = 1;
+
+  Low = new double[NumVar];
+  Upp = new double[NumVar];
+
+  for (int i = 0; i < NumVar; i++)
+  {
+      Low[i] = SurrHK->HPlow;
+      Upp[i] = SurrHK->HPupp;
+  }
+
+  Out = out;
+}
 
 // ============================= Evaluate ================================
 
 void cProbLikelihood :: Evaluate(cVector &x, cVector &c, cVector &fobjs)
 {
+  // Check the class of surrogate...
+  bool surr;
+
   // Objective function evaluation.
 
-  fobjs[0] = Surr->Eval(x, Out);
+  if (SurrCK == 0 && SurrHK == 0)
+  {
+      // Ordinary Kriging
+      fobjs[0] = Surr->Eval(x, Out);
+  }
+  else if (Surr == 0 && SurrHK == 0)
+  {
+      // Co-KRG model
+      fobjs[0] = SurrCK->Eval(x, Out, EvalType);
+  }
+  else if (Surr == 0 && SurrCK == 0)
+  {
+      // Hierarchical Kriging model
+      fobjs[0] = SurrHK->Eval(x, Out, EvalType);
+  }
+  else
+  {
+      cout << "Error in the evaluation of the likelihood (problike)" << endl;
+      exit(0);
+  }
 }
 
 // ======================================================= End of file =====

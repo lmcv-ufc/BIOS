@@ -37,7 +37,7 @@
 #include <fstream>
 #include <iomanip>
 #include <vector>
-#include <algorithm>
+#include <bits/stdc++.h>
 
 #include "rbf.h"
 #include "surr.h"
