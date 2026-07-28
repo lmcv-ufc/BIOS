@@ -193,7 +193,7 @@ void cStandardDE :: Solver(void)
     {
       // Initialize particles position and velocity.
       if (i < NumInpSol)
-        pop[i]->Init(InpSolVec[i]); // Input values.
+          pop[i]->Init(InpSolVec[i]); // Input values.
       else if (IntPopSamp)
         pop[i]->Init(sx[i]);        // Random values.
       else

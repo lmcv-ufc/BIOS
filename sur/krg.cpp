@@ -37,7 +37,7 @@
 #include <fstream>
 #include <iomanip>
 #include <vector>
-//#include <bits/stdc++.h>
+#include <bits/stdc++.h>
 
 #ifdef _OMP_
 #include "omp.h"
@@ -68,13 +68,17 @@ using namespace std;
 
 cKRG :: cKRG(void)
 {
-    SubAlgType     = new cStandardPSO; // Method for maximization of likelihood
-    SubPop         = 250;              // Population size (maximization of likelihood)
-    SubMaxGen      = 100;              // Number of iterations (maximization of likelihood)
+    SubAlgType     = new cStandardPSO;  // Method for maximization of likelihood
+    SubPop         = 50;               // Population size (maximization of likelihood)
+    SubMaxGen      = 200;              // Number of iterations (maximization of likelihood)
+    SubStallGen    = 50;
+    SubDifType     = Loc2Best;
+    SubTopology    = RING_TOPOLOGY;
     SubTolViol     = 1e-5;             // Tolerance for violation (maximization of likelihood)
     SubMutProb     = 0.05;             // Mutation probability (maximization of likelihood)
     Hmat           = 0;                // Psi matrix
     Hmatdc         = 0;                // Inverse of Psi matrix
+    Update         = 0;
 }
 
 // ================================= ~cKRG =================================
@@ -88,6 +92,8 @@ cKRG :: ~cKRG()
 void cKRG :: CreateModel(const sSampData &sampdata, eCorrelationType corrtype,
                          double HyperParamLow, double HyperParamUpp)
 {
+  Update = 0;
+
   // Store samples points and values.
 
   sdata = sampdata;
@@ -138,6 +144,7 @@ void cKRG :: CreateModel(const sSampData &sampdata, eCorrelationType corrtype,
         sdata.NumSample = sdata.SampleY.size();
 
         if (Weight.size() > 0) Weight.clear();
+        if (Weight1.size() > 0) Weight1.clear();
 
         for(int m = 0; m < sdata.NumOut; m++)
         {
@@ -185,6 +192,7 @@ void cKRG :: CreateModel(const sSampData &sampdata, eCorrelationType corrtype,
      cout << "\n Pos EGO " << endl;
 
      if (Weight.size() > 0) Weight.clear();
+     if (Weight1.size() > 0) Weight1.clear();
 
      for(int m = 0; m < sdata.NumOut; m++)
      {
@@ -204,6 +212,8 @@ void cKRG :: CreateModel(const sSampData &sampdata, eCorrelationType corrtype,
 
 void cKRG :: UpdateModel(eCorrelationType corrtype, cVectorVec &sx, cVectorVec &sy)
 {
+    Update = 0;
+
     int nn = sx.size();
     sdata.NumSample += nn;
 
@@ -224,6 +234,7 @@ void cKRG :: UpdateModel(eCorrelationType corrtype, cVectorVec &sx, cVectorVec &
     MaxLikelihood(bestlikelihood, this);
 
     if (Weight.size() > 0) Weight.clear();
+    if (Weight1.size() > 0) Weight1.clear();
 
     for(int m = 0; m < sdata.NumOut; m++)
     {
@@ -348,6 +359,15 @@ void cKRG :: MaxLikelihood(cVector &bestParticlevec, cKRG *SurMod)
     alg -> SetPenFunction(pen);
     alg -> SetMutProb(SubMutProb);
 
+    alg -> SetStallGen(SubStallGen);
+
+    if (alg->GetType() == STANDARD_PSO){
+        alg -> SetSwarmTopology(SubTopology);
+    }
+    else if(alg->GetType() == STANDARD_DE){
+        alg -> SetDifType(SubDifType);
+    }
+
     int no;
     SurMod->GetNumOut(no);
 
@@ -355,6 +375,29 @@ void cKRG :: MaxLikelihood(cVector &bestParticlevec, cKRG *SurMod)
     for (int i = 0; i < no; i++)
     {
         cProblem* probbest = new cProbLikelihood(SurMod, i);
+
+        if (Update == 1)
+        {
+            int NumInitSol = 1;
+            sInpSol* SolVecInit = new sInpSol [NumInitSol];
+
+            for(int k = 0; k < NumInitSol; k++)
+            {
+              SolVecInit[k].type = SubSolType;
+              SolVecInit[k].CodVar.Resize(probbest -> GetNumVar( ));
+
+              // Read each solution variable.
+              for(int j = 0; j < probbest -> GetNumVar( ); ++j)
+                SolVecInit[k].CodVar[j] = BestThetaOld[i][j];
+
+              cout << "Initial Theta: ";
+              SolVecInit[k].CodVar.Print( );
+            }
+
+            alg -> SetInpSolVec(SolVecInit);
+            alg -> SetNumInpSol(NumInitSol);
+            BestThetaOld.clear( );
+        }
 
         alg -> SetProblem(probbest);
         alg -> Init( );
@@ -365,6 +408,7 @@ void cKRG :: MaxLikelihood(cVector &bestParticlevec, cKRG *SurMod)
 
         BestTheta.push_back(best->GetBestVec());
     }
+    BestThetaOld = BestTheta;
     cout << "Best thetas: " << endl;
     for (int i = 0; i < sdata.NumOut; i++)
     {
@@ -393,7 +437,9 @@ void cKRG :: EvalWeights(cVector &mle1, cVector &theta, int out)
 
     double mu, sigmasqrsur;
     MuSur(mu, out, Utemp);
+
     SigmaSqrSur(mu, sigmasqrsur, out, Utemp);
+
     Mu[out] = mu;
     SigmaSqr[out] = sigmasqrsur;
 
@@ -406,6 +452,13 @@ void cKRG :: EvalWeights(cVector &mle1, cVector &theta, int out)
     Utemp.SolveLU(mle1);
 
     Weight.push_back(mle1);
+
+    cVector ones(sdata.NumSample);
+    for (int i = 0; i < sdata.NumSample; i++)
+        ones[i] = 1.0;
+
+    Utemp.SolveLU(ones);
+    Weight1.push_back(ones);
 }
 
 
@@ -536,11 +589,10 @@ double cKRG :: SSqrSur(cVector x, cVector &theta, int out)
     cVector onestemp = ones;
     Hm.SolveLU(s2c1);
 
-    Hm.SolveLU(onestemp);
-
     double s2c = fi*s2c1;
 
-    double ssqr = sigmasqrsur*(1.0 - s2c + (pow((1-ones*s2c1),2)/(ones*onestemp)));
+    // double ssqr = sigmasqrsur*(1.0 - s2c + (pow((1-ones*s2c1),2)/(ones*Weight1[out])));
+    double ssqr = sigmasqrsur*(1.0 - s2c);
 
 
     if (ssqr < 0)
@@ -683,25 +735,19 @@ double cKRG :: EvalExpImp(cVector &x, double ybest)
   Pred[0] = ytemp[0];
   s[0] = sqrt(ssqr[0]);
 
-  bool isin = false;
-  if (s[0] < 0.01)
+  if (s[0] <= 1e-12)
   {
-      isin = IsInSample(x, 1e-5);
+      ei = 0.0;
   }
-
-      if (s[0] <= 0 || isin == true)
-      {
-          ei = 0.0;
-      }
-      else
-      {
-          double EI1 = ybest - Pred[0];
-          double erf1 = erf(EI1/(sqrt(2*ssqr[0])));
-          double EI2 = 0.5 + 0.50*erf1;
-          double EI3 = s[0]*(1/(sqrt(2*pi)));
-          double EI4 = exp(-(EI1*EI1)/(2*ssqr[0]));
-          ei = WEI*(EI1*EI2) + (1 - WEI)*(EI3*EI4);
-      }
+  else
+  {
+      double EI1 = ybest - Pred[0];
+      double erf1 = erf(EI1/(sqrt(2*ssqr[0])));
+      double EI2 = 0.5 + 0.50*erf1;
+      double EI3 = s[0]*(1/(sqrt(2*pi)));
+      double EI4 = exp(-(EI1*EI1)/(2*ssqr[0]));
+      ei = WEI*(EI1*EI2) + (1 - WEI)*(EI3*EI4);
+  }
 
   return(ei);
 }
@@ -711,8 +757,6 @@ double cKRG :: EvalExpImp(cVector &x, double ybest)
 double cKRG :: EvalProbImp(cVector &x, double ybest)
 {
   double PoI;
-
-  double pi = atan(1)*4;
 
   cVector ytemp(sdata.NumOut);
 
@@ -726,21 +770,15 @@ double cKRG :: EvalProbImp(cVector &x, double ybest)
   Pred[0] = ytemp[0];
   s[0] = sqrt(ssqr[0]);
 
-  bool isin = false;
-  if (s[0] < 0.01)
+  if (s[0] <= 1e-12)
   {
-      isin = IsInSample(x, 1e-5);
+      PoI = 0.0;
   }
-
-      if (s[0] <= 0 || isin == true)
-      {
-          PoI = 0.0;
-      }
-      else
-      {
-          double term = ybest - Pred[0];
-          PoI = erf(term/(sqrt(2*ssqr[0])));
-      }
+  else
+  {
+      double term = ybest - Pred[0];
+      PoI = erf(term/(sqrt(2*ssqr[0])));
+  }
 
   return(PoI);
 }
@@ -752,8 +790,6 @@ double cKRG :: EvalLCB(cVector &x)
 {
   double LCB;
 
-  double pi = atan(1)*4;
-
   cVector ytemp(sdata.NumOut);
 
   Evaluate(x, ytemp);
@@ -766,13 +802,9 @@ double cKRG :: EvalLCB(cVector &x)
   Pred[0] = ytemp[0];
   s[0] = sqrt(ssqr[0]);
 
-  bool isin = false;
-  if (s[0] < 0.01)
-  {
-  isin = IsInSample(x, 1e-5);
-  }
-
+  // LCB - Test
   LCB = Pred[0] - Beta*s[0];
+  // LCB = (1 - Beta)*Pred[0] - Beta*s[0];
 
   return(LCB);
 }
@@ -791,7 +823,7 @@ double cKRG :: EvalInfPen(cVector &x, int out, double tolviol)
 
   Pred = ytemp[out];
 
-  if (Pred > tolviol)
+  if (Pred > -tolviol)
   {
       PF = 0;
   }
@@ -834,13 +866,9 @@ double cKRG :: EvalProbFeas(cVector &x, int out, double tolviol)
 
   Pred = ytemp[out];
 
-  bool isin = false;
-  if (s < 10)
-  {
-  isin = IsInSample(x, 1e-5);
-  }
+  if (tolviol < 1e-12) tolviol = 1e-12;
 
-  if (s <= tolviol || isin == true)
+  if (s <= tolviol)
   {
       PF = 0;
   }
@@ -937,13 +965,9 @@ double cKRG :: EvalProbFeasBagheri(cVector &x, int out, double tolviol)
 
   Pred = ytemp[out];
 
-  bool isin = false;
-  if (s < 10)
-  {
-  isin = IsInSample(x, 1e-5);
-  }
+  if (tolviol < 1e-12) tolviol = 1e-12;
 
-  if (s <= tolviol || isin == true)
+  if (s <= tolviol)
   {
       PF = 0;
   }
@@ -963,6 +987,55 @@ double cKRG :: EvalProbFeasBagheri(cVector &x, int out, double tolviol)
 
   return pf;
 
+}
+
+// ========================== EvalProbFeas ==============================
+
+double cKRG :: EvalProbFeasSohst(cVector &x, int out, double tolviol)
+{
+  double pf;
+  double PF = 0;
+
+  double pi = atan(1)*4;
+  double n = nFacSohst;
+  double ssqr;
+
+  cVector ytemp(sdata.NumOut);
+  Evaluate(x, ytemp);
+
+  double Pred;
+
+  ssqr = SSqrSur(x, BestTheta[out], out);
+
+  double s;
+
+  if(ssqr <= 0)
+  {
+      s = 0;
+  }
+  else
+  {
+    s  = sqrt(ssqr);
+  }
+
+  Pred = ytemp[out];
+
+  if (tolviol < 1e-12) tolviol = 1e-12;
+
+  if (s <= tolviol)
+  {
+      PF = 0;
+  }
+  else
+  {
+      double erfunc = erf((0 - Pred)/s);
+      PF = 0.5 + 0.5*erfunc;
+  }
+
+  pf = sin(PF*(pi/2.0));
+  pf = pow(pf, n);
+
+  return pf;
 }
 
 

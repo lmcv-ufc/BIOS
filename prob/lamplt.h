@@ -132,4 +132,41 @@ class cLamPltMinLopez2009 : public cLamPlate
   void    Evaluate(int**, cVector &, cVector &);
 };
 
+// -------------------------------------------------------------------------
+// Definition of SquarePlateMFBuckLam class:
+//
+class cSquarePlateMFBuckLam : public cLamPlate
+{
+ protected:
+  void     Analysis(int, cMatrix &, double &);
+
+ public:
+           cSquarePlateMFBuckLam(void);
+          ~cSquarePlateMFBuckLam(void) { }
+  void     Evaluate(int**, cVector &, cVector &);
+  void     EvaluateLFP(int**, cVector &, cVector &);
+  void     EvalExactConstraint(int,int**,double &);
+  void     GetApproxObj(bool*o) { o[0] = 1; }
+  void     GetApproxConstr(bool*);
+};
+
+// -------------------------------------------------------------------------
+// Definition of SquarePlateMFBuckLam class:
+//
+class cSquarePlateKeshtegarBuckLam : public cLamPlate
+{
+ protected:
+  void     Analysis(int, cMatrix &, double &);
+  void     RepairAlgorithm(int**,int,int,int);
+
+ public:
+           cSquarePlateKeshtegarBuckLam(void);
+          ~cSquarePlateKeshtegarBuckLam(void) { }
+  void     Evaluate(int**, cVector &, cVector &);
+  void     EvaluateLFP(int**, cVector &, cVector &);
+  void     EvalExactConstraint(int,int**,double &);
+  void     GetApproxObj(bool*o) { o[0] = 1; }
+  void     GetApproxConstr(bool*);
+};
+
 #endif

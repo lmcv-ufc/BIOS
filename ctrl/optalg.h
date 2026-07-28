@@ -44,6 +44,8 @@
 // |-- SAO
 // |---- KRGSAO
 // |---- RBFSAO
+// |---- COKRGSAO
+// |---- HIERKRGSAO
 //
 // -------------------------------------------------------------------------
 // Static methods:
@@ -221,6 +223,8 @@ typedef enum
   STANDARD_DE,            // Standard Differential Evolution.
   SAORBF,                 // Sequential Approximate Optimization using RBF models
   SAOKRG,                 // Sequential Approximate Optimization using KRG models
+  SAOCOKRG,               // Sequential Approximate Optimization using COKRG models
+  SAOHKRG,                // Sequential Approximate Optimization using HIERKRG models
   RANDOM_SEARCH           // Random search.
 } eOptAlgType;
 
@@ -273,6 +277,7 @@ class cOptAlgReadEntry : public cAbsReadEntry
 class cOptAlgorithm
 {
  protected:
+  cMatrix        ThetaIt;
   cInpMap       *InpMap;        // Input map used to read input file 
   eCrossType     CrossType;     // Type of crossover read from input file
   eDifType       DifType;       // Type of differentiation read from input file (DE)
@@ -285,6 +290,7 @@ class cOptAlgorithm
   int            MigrationGap;  // Interval between migrations
   double         TolViol;       // Tolerance for constraint violation
   double         TolSucRate;    // Tolerance for success optimization
+  double         TolSuc;        // Tolerance for success optimization (if lower than TolSuc)
   double         MutProb;       // Mutation probability
   double         MaxMut;        // Maximum mutation probability
   double         MinMut;        // Minimum mutation probability
@@ -324,6 +330,13 @@ class cOptAlgorithm
           double        *MBestGen;      // Generations mean best over optimizations
           cSolGroup     *best;          // Group of best solutions
 
+          cVector        nHigFidSamp;
+          cVector        nLowFidSamp;
+          cVector        Tinf;
+          cVector        Teval;
+          cVector        Tbuild;
+          int            GenStop;
+
  public:
           void           SetPenFunction(cPenalty* p)   { Pen          = p;    }
           void           SetSelMethod(cSelection* s)   { Sel          = s;    }
@@ -343,6 +356,11 @@ class cOptAlgorithm
           void           SetOutStream(std::ostream &o) { out          = &o;   }
           void           SetFeedback(bool fb)          { Feedback     = fb;   }
 
+          void           SetIntPopSamp(bool b)     { IntPopSamp          = b;   }
+          void           SetSampType(eSampType st) { SampType            = st;  }
+          void           SetInpSolVec(sInpSol* s)  { InpSolVec           = s;   }
+          void           SetNumInpSol(int n)       { NumInpSol           = n;   }
+
 
           virtual  void  SetSwarmTopology(eSwaTopType){;}
           virtual  void  SetDifType(eDifType){;}
@@ -351,6 +369,7 @@ class cOptAlgorithm
           void           ReadAlg(std::istream&);
           void           ReadOptNum(std::istream&);
           void           ReadTolViol(std::istream&);
+          void           ReadTolSuc(std::istream&);
           void           ReadTolSucRate(std::istream&);
           void           ReadPopSize(std::istream&);
           void           ReadSampType(std::istream&);
@@ -392,6 +411,9 @@ class cOptAlgorithm
           void           PrintPostVar(int,int,double,cGroup*);
           void           PrintPostVar(int,int,double,cGroup*, std::vector<int> *solrank);
           void           PostProcessing(void);
+
+          void           UpdateTimeVar(int,int,int,int,double,double,double);
+          void           PrintTimeVar( );
 
   virtual void           Solver(void) = 0;
 };

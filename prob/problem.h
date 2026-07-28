@@ -235,6 +235,9 @@ class cProblem
   virtual void       Evaluate(int*, cVector &, cVector &);
   virtual void       Evaluate(int**, cVector &, cVector &);
   virtual void       Evaluate(cVector &, cVector &, cVector &);
+  virtual void       EvaluateLFP(int*, cVector &, cVector &);
+  virtual void       EvaluateLFP(int**, cVector &, cVector &);
+  virtual void       EvaluateLFP(cVector &, cVector &, cVector &);
   virtual void       GetApproxConstr(bool*);
   virtual void       GetApproxObj(bool*);
 

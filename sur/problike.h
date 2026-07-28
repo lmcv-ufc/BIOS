@@ -56,7 +56,15 @@ using namespace std;
 // Forward Declarations:
 //
 class cVector;
+class cCOKRG;
+class cHIERKRG;
 class cKRG;
+
+typedef enum
+{
+  BASIC,
+  DIFFMODELFIT
+} eProbLikeType;
 
 // ------------------------------------------------------------------------
 // Definition of cProbLikelihood class:
@@ -64,12 +72,17 @@ class cKRG;
 class cProbLikelihood : public cBenchContinuous
 {
   protected:
-    cKRG             *Surr;
+    cKRG              *Surr;
+    cCOKRG            *SurrCK;
+    cHIERKRG          *SurrHK;
     int               Out;
+    eProbLikeType     EvalType;
 
   public:
 
             cProbLikelihood(cKRG *smod, int out);
+            cProbLikelihood(cCOKRG *smod, int out, eProbLikeType plt);
+            cProbLikelihood(cHIERKRG *smod, int out, eProbLikeType plt);
 
          void    Evaluate(cVector &, cVector &, cVector &);
 };

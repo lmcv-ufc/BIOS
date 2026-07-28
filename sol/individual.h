@@ -110,6 +110,7 @@ class cIndivIntVec : public cIndividual
   void     AddBestSample(cVector, double);
   void     GetBestSample(cVector &);
   void     Evaluate(void);
+  void     EvaluateLFP(void){ }
   void     Print(void);
   void     Write(std::ostream&);
   void     Copy(cOptSolution *);
@@ -150,6 +151,7 @@ class cIndivIntMat : public cIndividual
   void     AddBestSample(cVector, double);
   void     GetBestSample(cVector &);
   void     Evaluate(void);
+  void     EvaluateLFP(void){ }
   void     Print(void);
   void     Write(std::ostream&);
   void     Copy(cOptSolution *);
@@ -191,6 +193,7 @@ class cIndivDblVec : public cIndividual
   void     AddBestSample(cVector, double);
   void     GetBestSample(cVector &);
   void     Evaluate(void);
+  void     EvaluateLFP(void){ }
   void     Print(void);
   void     GetVar(cVector&);
   void     Write(std::ostream&);
@@ -232,6 +235,7 @@ class cIndivBinVec : public cIndividual
   void     AddBestSample(cVector, double);
   void     GetBestSample(cVector &);
   void     Evaluate(void);
+  void     EvaluateLFP(void){ }
   void     Print(void) ;
   void     Write(std::ostream&);
   void     Copy(cOptSolution *);

@@ -106,6 +106,7 @@ class cSAO : public cOptAlgorithm
 
     int             SubPop;
     int             SubMaxGen;
+    int             SubStallGen;
     int             GenStall;
     double          SubTolViol;
     double          SubMutProb;
@@ -132,8 +133,13 @@ class cSAO : public cOptAlgorithm
     // Expect improvement data?
     double     WEI;
     double     Beta;
+    double     NFac;
     bool       ciclewei;
     eSigmaType SigType;
+
+    int CicleSize;
+    cVector ListWEI;
+    cVector ListBeta;
 
  public:
                      cSAO(void);
@@ -156,6 +162,7 @@ class cSAO : public cOptAlgorithm
   virtual void      LoadReadFunc(cInpMap&);
   void              ReadSubPop(std::istream&);
   void              ReadSubMaxGen(std::istream&);
+  void              ReadSubStallGen(std::istream&);
   void              ReadSubPSOTopology(std::istream&);
   void              ReadSubDEType(std::istream&);
   void              ReadSubTolViol(std::istream&);
@@ -168,12 +175,17 @@ class cSAO : public cOptAlgorithm
   void              ReadNumInitSamplingPoints(std::istream&);
   void              ReadConstrMethod(std::istream&); // LEO
   void              ReadInfillCriteria(std::istream&); // LEO
+  void              ReadCicleWEI(std::istream&); // LEO
   void              ReadWEI(std::istream&); // LEO
   void              ReadBeta(std::istream&); // LEO
+  void              ReadCyclicWEI(std::istream&); // LEO
+  void              ReadCyclicBeta(std::istream&); // LEO
+  void              ReadNFacSohst(std::istream&); // LEO
   void              InitSample(sSampData&);
   void              SetApproxObj( );
   void              SetApproxConstr( );
   void              SetInitialSample(sProbAppOut&,cSampSet*&,sSampData&,int&);
+  void              PrintHyperPar(cVector,int,int);
 
   bool              OptStopCrit(int,int,double&,cGroup*);
 

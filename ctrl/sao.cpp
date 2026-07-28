@@ -34,6 +34,7 @@
 
 #include <string>
 #include <vector>
+#include <chrono>
 
 using namespace std;
 
@@ -145,6 +146,7 @@ cSAO :: cSAO(void) : cOptAlgorithm( )
 {
     SubPop         = 250;//100;
     SubMaxGen      = 100;//250;
+    SubStallGen    = 100;//250;
     SubTolViol     = 1e-5;
     SubMutProb     = 0.02;
     Nmax           = 10e30;
@@ -155,6 +157,11 @@ cSAO :: cSAO(void) : cOptAlgorithm( )
 
     WEI  = 0.5;
     Beta = 1.0;
+
+    CicleSize = 3;
+    ListWEI.Resize(CicleSize);  ListWEI[0]  = 0.20; ListWEI[1]  = 0.35; ListWEI[2]  = 0.50;
+    ListBeta.Resize(CicleSize); ListBeta[0] = 1.00; ListBeta[1] = 2.00; ListBeta[2] = 3.00;
+
 
     InputNS     = 0;
     FlagVS      = 0;
@@ -169,22 +176,27 @@ void cSAO :: LoadReadFunc(cInpMap &im)
   cOptAlgorithm :: LoadReadFunc(im);
 
   // Register read functions.
-  im.Insert("SUB.POPULATION.SIZE" ,  makeReadObj(cSAO, ReadSubPop));
-  im.Insert("SUB.MAXIMUM.GENERATIONS" ,  makeReadObj(cSAO, ReadSubMaxGen));
-  im.Insert("SUB.CONSTRAINT.TOLERANCE" ,  makeReadObj(cSAO, ReadSubTolViol));
-  im.Insert("SUB.PSO.TOPOLOGY" ,  makeReadObj(cSAO, ReadSubPSOTopology));
-  im.Insert("SUB.DE.TYPE" ,  makeReadObj(cSAO, ReadSubDEType));
-  im.Insert("SUB.MUTATION.PROBABILITY" ,  makeReadObj(cSAO, ReadSubMutProb));
-  im.Insert("MAXIMUM.NUMBER.OF.POINTS" ,  makeReadObj(cSAO, ReadNmax));
-  im.Insert("MINIMUM.NRMSE" ,  makeReadObj(cSAO, ReadMinNRMSE));
-  im.Insert("SUB.OPTIMIZATION.ALGORITHM" ,  makeReadObj(cSAO, ReadSubAlgType));
+  im.Insert("SUB.POPULATION.SIZE"               ,  makeReadObj(cSAO, ReadSubPop));
+  im.Insert("SUB.MAXIMUM.GENERATIONS"           ,  makeReadObj(cSAO, ReadSubMaxGen));
+  im.Insert("SUB.STALL.GEN"                     ,  makeReadObj(cSAO, ReadSubStallGen));
+  im.Insert("SUB.CONSTRAINT.TOLERANCE"          ,  makeReadObj(cSAO, ReadSubTolViol));
+  im.Insert("SUB.PSO.TOPOLOGY"                  ,  makeReadObj(cSAO, ReadSubPSOTopology));
+  im.Insert("SUB.DE.TYPE"                       ,  makeReadObj(cSAO, ReadSubDEType));
+  im.Insert("SUB.MUTATION.PROBABILITY"          ,  makeReadObj(cSAO, ReadSubMutProb));
+  im.Insert("MAXIMUM.NUMBER.OF.POINTS"          ,  makeReadObj(cSAO, ReadNmax));
+  im.Insert("MINIMUM.NRMSE"                     ,  makeReadObj(cSAO, ReadMinNRMSE));
+  im.Insert("SUB.OPTIMIZATION.ALGORITHM"        ,  makeReadObj(cSAO, ReadSubAlgType));
   im.Insert("NUMBER.OF.INITIAL.SAMPLING.POINTS" ,  makeReadObj(cSAO, ReadNumInitSamplingPoints));
-  im.Insert("SAMPLE.FILE.NAME" ,  makeReadObj(cSAO, ReadSampleFileName));
-  im.Insert("VALIDATION.SAMPLES" ,  makeReadObj(cSAO, ReadValSamples));
-  im.Insert("CONSTRAINT.HANDLING.METHOD" ,  makeReadObj(cSAO, ReadConstrMethod));
-  im.Insert("INFILL.CRITERIA" ,  makeReadObj(cSAO, ReadInfillCriteria));
-  im.Insert("WEI.VALUE" ,  makeReadObj(cSAO, ReadWEI));
-  im.Insert("BETA.VALUE" ,  makeReadObj(cSAO, ReadBeta));
+  im.Insert("SAMPLE.FILE.NAME"                  ,  makeReadObj(cSAO, ReadSampleFileName));
+  im.Insert("VALIDATION.SAMPLES"                ,  makeReadObj(cSAO, ReadValSamples));
+  im.Insert("CONSTRAINT.HANDLING.METHOD"        ,  makeReadObj(cSAO, ReadConstrMethod));
+  im.Insert("INFILL.CRITERIA"                   ,  makeReadObj(cSAO, ReadInfillCriteria));
+  im.Insert("USE.CYCLIC.WEIGHTS"                ,  makeReadObj(cSAO, ReadCicleWEI));
+  im.Insert("WEI.VALUE"                         ,  makeReadObj(cSAO, ReadWEI));
+  im.Insert("BETA.VALUE"                        ,  makeReadObj(cSAO, ReadBeta));
+  im.Insert("CYCLIC.WEI.VALUE"                  ,  makeReadObj(cSAO, ReadCyclicWEI));
+  im.Insert("CYCLIC.BETA.VALUE"                 ,  makeReadObj(cSAO, ReadCyclicBeta));
+  im.Insert("N.FACTOR.SOHST"                    ,  makeReadObj(cSAO, ReadNFacSohst));
 }
 
 // =========================== ReadSubPop ===========================
@@ -203,6 +215,17 @@ void cSAO :: ReadSubPop(istream &in)
 void cSAO :: ReadSubMaxGen(istream &in)
 {
   if (!(in >> SubMaxGen))
+  {
+    cout << "Error in the input of the subproblem population size." << endl;
+    exit(0);
+  }
+}
+
+// ========================= ReadSubMaxGen ==========================
+
+void cSAO :: ReadSubStallGen(istream &in)
+{
+  if (!(in >> SubStallGen))
   {
     cout << "Error in the input of the subproblem population size." << endl;
     exit(0);
@@ -251,6 +274,63 @@ void cSAO :: ReadBeta(istream &in)
     cout << "Error in the input of the beta factor for the Lower Confidence Bound criterion." << endl;
     exit(0);
   }
+}
+
+// ======================== ReadSubMutProb ==========================
+
+void cSAO :: ReadNFacSohst(istream &in)
+{
+  if (!(in >> NFac))
+  {
+    cout << "Error in the input of the beta factor for the Lower Confidence Bound criterion." << endl;
+    exit(0);
+  }
+}
+
+// ======================== ReadWEI ==========================
+
+void cSAO :: ReadCyclicWEI(istream &in)
+{
+  if (!(in >> CicleSize))
+  {
+    cout << "Error in the input of the size of the cyclic WEI." << endl;
+    exit(0);
+  }
+
+  ListBeta.Resize(CicleSize); ListWEI.Resize(CicleSize);
+  ListBeta.Zero( ); ListWEI.Zero( );
+
+  for (int i = 0; i < CicleSize; i++)
+  {
+      if (!(in >> ListWEI[i]))
+      {
+        cout << "Error in the input of the WEI weigth (ID = " << i+1 << ")." << endl;
+        exit(0);
+      }
+  }
+}
+
+// ======================== ReadBeta ==========================
+
+void cSAO :: ReadCyclicBeta(istream &in)
+{
+    if (!(in >> CicleSize))
+    {
+      cout << "Error in the input of the size of the cyclic Beta." << endl;
+      exit(0);
+    }
+
+    ListBeta.Resize(CicleSize); ListWEI.Resize(CicleSize);
+    ListBeta.Zero( ); ListWEI.Zero( );
+
+    for (int i = 0; i < CicleSize; i++)
+    {
+        if (!(in >> ListBeta[i]))
+        {
+          cout << "Error in the input of Beta (ID = " << i+1 << ")." << endl;
+          exit(0);
+        }
+    }
 }
 
 // ======================== ReadSampleFileName ==========================
@@ -354,6 +434,8 @@ void cSAO :: ReadConstrMethod(istream &in)
       ConstrMethod = POF_TUTUM;
     else if (string(label)=="BAGHERI" || string(label)=="Bagheri"  || string(label)=="FFB")
       ConstrMethod = POF_BAGHERI;
+    else if (string(label)=="SOHST" || string(label)=="Sohst"  || string(label)=="FFS")
+      ConstrMethod = POF_SOHST;
     else
     {
         cout << "Unknown constraint handling method: " << label << endl;
@@ -384,6 +466,12 @@ void cSAO :: ReadInfillCriteria(istream &in)
       InfillCriteria = EVALUATE_PROBABILITY_IMPROVEMENT;
     else if (string(label)=="EXPECTEDIMPROVEMENT" || string(label)=="ExpectedImprovement"  || string(label)=="EI")
       InfillCriteria = EVALUATE_EXPECTED_IMPROVEMENT;
+    else if (string(label)=="VARIABLEFIDELITYLOWERCONFIDENCEBOUND" || string(label)=="VariableFidelityLowerConfidenceBound" || string(label)=="VFLCB")
+      InfillCriteria = EVALUATE_VF_LOWER_CONFIDENCE_BOUND;
+    else if (string(label)=="VARIABLEFIDELITYPROBABILITYOFIMPROVEMENT" || string(label)=="VariableFidelityProbabilityOfImprovement"  || string(label)=="VFPOI")
+      InfillCriteria = EVALUATE_VF_PROBABILITY_IMPROVEMENT;
+    else if (string(label)=="VARIABLEFIDELITYEXPECTEDIMPROVEMENT" || string(label)=="VariableFidelityExpectedImprovement"  || string(label)=="VFEI")
+      InfillCriteria = EVALUATE_VF_EXPECTED_IMPROVEMENT;
     else
     {
         cout << "Unknown infill criteria: " << label << endl;
@@ -436,6 +524,17 @@ void cSAO :: ReadMinNRMSE(istream &in)
   if (!(in >> MinNRMSE))
   {
     cout << "Error in the input of the minimum NRMSE." << endl;
+    exit(0);
+  }
+}
+
+// ======================== ReadCicleWEI =========================
+
+void cSAO :: ReadCicleWEI(istream &in)
+{
+  if (!(in >> ciclewei))
+  {
+    cout << "Error in the input of the boolean related to the use of cyclic weights (should be 0 or 1)." << endl;
     exit(0);
   }
 }
@@ -761,11 +860,20 @@ void cSAO :: Solver(void)
 
     double lastBest = 0.0;
 
+    // Track the time spent in each phase
+
+    double tev, tbuild, tinf;
+    tinf = 0.0;
+
     // Create the population, mating pool and parent array.
     cSampSet    *smp;
     sProbAppOut appout(Prob);
     sSampData sdata;
+
+    auto start = chrono::steady_clock::now();
     SetInitialSample(appout,smp,sdata,EvalNum);
+    auto end = chrono::steady_clock::now();
+    tev = chrono::duration_cast<chrono::microseconds>(end - start).count();
 
     // Evaluate penalized objective function in samples.
     // Note: Pobj is not considered in infill procedure, but is used to select
@@ -776,14 +884,33 @@ void cSAO :: Solver(void)
       Pen->EvalPenObjFunc(smp, TolViol);
 
     // Create the surrogate model.
+    start = chrono::steady_clock::now();
     cSURR *SurModel = CreateSurrogate(sdata);
+    end = chrono::steady_clock::now();
+    tbuild = chrono::duration_cast<chrono::microseconds>(end - start).count();
 
     SurModel -> SetWEI(WEI);
     SurModel -> SetBeta(Beta);
+    SurModel -> SetNFacSohst(NFac);
+
+    // Store Hyperparameters
+
+    cVector besttheta(sdata.NumVar);
+    besttheta = SurModel -> GetBestTheta(0);
+    besttheta.Print( );
+
+    PrintHyperPar(besttheta, sdata.NumVar, -1);
 
     // Evaluate initial sample points.
 
     if (Feedback) cout << "Optimization: " << opt + 1 << endl;
+
+    nHigFidSamp.Resize(MaxGen);
+    nLowFidSamp.Resize(MaxGen);
+    Tinf.Resize(MaxGen);
+    Teval.Resize(MaxGen);
+    Tbuild.Resize(MaxGen);
+    UpdateTimeVar(opt, 0, smp->GetSize( ), 0, tinf, tev, tbuild);
 
     // Perform the GA iterations.
 
@@ -793,12 +920,11 @@ void cSAO :: Solver(void)
 
       if (ciclewei)
       {
-        double w[3] = {0.2, 0.35, 0.5};
-        double b[3] = {1.0, 2.0, 3.0};
-        int stepw = step % 3;
-        SurModel -> SetWEI(w[stepw]);
-        SurModel -> SetBeta(b[stepw]);
-        if (Feedback) cout << "w = " << w[stepw] << endl;
+        int stepw = step % CicleSize;
+        SurModel -> SetWEI(ListWEI[stepw]);
+        SurModel -> SetBeta(ListBeta[stepw]);
+        if (Feedback) cout << "w    = " << ListWEI[stepw] << endl;
+        if (Feedback) cout << "beta = " << ListBeta[stepw] << endl;
       }
 
       // Select new points.
@@ -806,12 +932,20 @@ void cSAO :: Solver(void)
       cVector npntx(SurModel->GetSampData( ).NumVar);
       cVector  pnty(SurModel->GetSampData( ).NumOut);
       double  objf;
+      start = chrono::steady_clock::now();
       EvalInfillCriteria(SurModel,smp,appout,pntx,objf);
+      end = chrono::steady_clock::now();
+      tinf = chrono::duration_cast<chrono::microseconds>(end - start).count();
 
 
       // Evaluate new point.
       newsmp = smp->PushBack(pntx);
+
+      start = chrono::steady_clock::now();
       newsmp->Evaluate( );
+      end = chrono::steady_clock::now();
+      tev = chrono::duration_cast<chrono::microseconds>(end - start).count();
+
       newsmp->GetSurrOutRes(pnty);
       EvalNum++;
 
@@ -821,13 +955,21 @@ void cSAO :: Solver(void)
       nx.push_back(pntx);
       ny.push_back(pnty);
 
+      start = chrono::steady_clock::now();
       UpdateSurrogate(nx,ny);
+      end = chrono::steady_clock::now();
+      tbuild = chrono::duration_cast<chrono::microseconds>(end - start).count();
+
+      // Store Hyperparameters
+
+      besttheta = SurModel -> GetBestTheta(0);
+      PrintHyperPar(besttheta, sdata.NumVar, step);
 
       // Update variables related to PostProcessing.
 
       if (Pen) Pen->EvalPenObjFunc(smp, TolViol);
 
-      UpdatePostVar(step, opt, lastBest,smp); 
+      UpdatePostVar(step, opt, lastBest,smp);
       
       if (Feedback) 
       {
@@ -838,6 +980,8 @@ void cSAO :: Solver(void)
         smp->BestSol( )->Print( );
         cout << endl;
       }
+
+      UpdateTimeVar(opt, step + 1, smp->GetSize( ), 0, tinf, tev, tbuild);
     
       // Check conditions to stop optimization
 
@@ -851,7 +995,28 @@ void cSAO :: Solver(void)
     // Print data in the output file.
 
     PrintPostVar(MaxGen, opt, EvalNum, smp);
+
+    PrintTimeVar( );
   }
+}
+
+// ============================ PrintHyperPar ============================
+
+void cSAO :: PrintHyperPar(cVector theta, int nv, int step)
+{
+  if (!out) return;
+
+  if (step == -1)
+  {
+      *out << "\n%HYPERPARAMETES.ITERATIONS\n";
+  }
+
+
+  for (int i = 0; i < nv; i++)
+  {
+      *out << theta[i] << "   ";
+  }
+  *out << endl;
 }
 
 // =============================== OptStopCrit =============================
@@ -936,7 +1101,7 @@ void cSAO :: EvalErrorMeasures(vector<cVector> &vsysur, cVector &nrmse, cVector 
 void cSAO :: EvalInfillCriteria(cSURR* Sur, cSampSet *smp, sProbAppOut &appout,cVector &xb, double &yb)
 {
     cOptAlgorithm *alg = SubAlgType;
-    cPenalty *pen = new cPenStatic;
+    cPenalty *pen = new cPenAdaptive;
 
     alg -> SetSolType(SolType);
     alg -> SetPopSize(SubPop);
@@ -946,6 +1111,13 @@ void cSAO :: EvalInfillCriteria(cSURR* Sur, cSampSet *smp, sProbAppOut &appout,c
     alg -> SetTolViol(SubTolViol);
     alg -> SetPenFunction(pen);
     alg -> SetMutProb(SubMutProb);
+
+    alg -> SetStallGen(SubStallGen);
+    alg -> SetSampType(SampType);
+    alg -> SetIntPopSamp(1);
+
+    if (Pen)
+        pen -> SetFactor(Pen->GetFactor( ));
 
     if (alg->GetType() == STANDARD_PSO){
         alg -> SetSwarmTopology(SubTopology);
@@ -963,6 +1135,7 @@ void cSAO :: EvalInfillCriteria(cSURR* Sur, cSampSet *smp, sProbAppOut &appout,c
 
     alg -> SetProblem(probbest);
     alg -> Init( );
+
     alg -> Solver( );
     cOptSolution* best = alg -> GetBest();
 

@@ -323,6 +323,12 @@ cSampSAO* cSampSet :: BestFeasible( )
   for (int i = 0; i < GroupSize; i++)
   {
     // Check if current sample violate any constraint.
+
+    bool   IsHF = GetSol(i)->GetFidelity( );
+    if (IsHF == 0){
+        continue;
+    }
+
     bool next = false;
     nc = SolVec[i]->GetProb( )->GetNumConstr( );
     for (int c = 0; c < nc; c++)
@@ -338,6 +344,68 @@ cSampSAO* cSampSet :: BestFeasible( )
   }
 
   return best;
+}
+
+// ============================== BestSol ==================================
+
+cOptSolution* cSampSet :: BestSol(void)
+{
+    int nc;
+    cSampSAO  *best = 0;
+    double currbest = DBL_MAX;
+    for (int i = 0; i < GroupSize; i++)
+    {
+      // Check if current sample violate any constraint.
+
+      bool   IsHF = GetSol(i)->GetFidelity( );
+      if (IsHF == 0){
+          continue;
+      }
+
+      /*bool next = false;
+      nc = SolVec[i]->GetProb( )->GetNumConstr( );
+      cout << "i = " << i + 1 << "   ";
+      for (int c = 0; c < nc; c++)
+      {
+          if (SolVec[i]->GetConstr( )[c] > 0.0) next = true;
+      }
+
+      if (next) continue;*/
+      nc = SolVec[i]->GetProb( )->GetNumConstr( );
+
+      double f;
+      if (nc > 0)
+          f = SolVec[i] -> GetPenObjFunc( );
+      else
+          f = SolVec[i] -> GetObjFunc(0);
+
+      if (f < currbest)
+      {
+        best     = (*this)[i];
+        if (nc > 0)
+            currbest = best->GetPenObjFunc( );
+        else
+            currbest = best->GetObjFunc(0);
+      }
+    }
+
+    return best;
+}
+
+// ============================= BestFeasible ==============================
+
+void cSampSet :: GetNumEval(int &nhf, int &nlf)
+{
+  nhf = 0; nlf = 0;
+
+  for (int i = 0; i < GroupSize; i++)
+  {
+    // Check if current sample violate any constraint.
+
+    bool   IsHF = GetSol(i)->GetFidelity( );
+    if (IsHF == 0) nlf += 1;
+    else nhf += 1;
+  }
 }
 
 // ============================= PushBack ==================================

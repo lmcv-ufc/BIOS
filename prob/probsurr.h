@@ -54,7 +54,8 @@ typedef enum
   INFINITE_PEN,
   POF_SCHONLAU,
   POF_TUTUM,
-  POF_BAGHERI
+  POF_BAGHERI,
+  POF_SOHST
 } eConstrType;
 
 // ------------------------------------------------------------------------
@@ -66,6 +67,9 @@ enum eProbSurrState
   EVALUATE_LOWER_CONFIDENCE_BOUND,
   EVALUATE_PROBABILITY_IMPROVEMENT,
   EVALUATE_EXPECTED_IMPROVEMENT,
+  EVALUATE_VF_LOWER_CONFIDENCE_BOUND,
+  EVALUATE_VF_PROBABILITY_IMPROVEMENT,
+  EVALUATE_VF_EXPECTED_IMPROVEMENT,
   EVALUATE_ESTIMATED_QUADRATIC_ERROR
 };
 
@@ -91,6 +95,7 @@ class cProbSurr : public cProblem
 
   void     SetConstrMethod(eConstrType c){ConstrMethod = c;} // LEO
   double   GetConstraintFactor(cVector, int); // LEO
+  double   GetConstraintFactor(cVector, int, int); // LEO
 
   int        VarNumRow(void) { return NumRow; }
   int        VarNumCol(void) { return NumCol; }
@@ -104,6 +109,9 @@ class cProbSurr : public cProblem
   void     EvaluateLCB(cVector &, cVector &, cVector &);
   void     EvaluateEI(cVector &, cVector &, cVector &);
   void     EvaluatePoI(cVector &, cVector &, cVector &);
+  void     EvaluateVFLCB(cVector &, cVector &, cVector &);
+  void     EvaluateVFEI(cVector &, cVector &, cVector &);
+  void     EvaluateVFPoI(cVector &, cVector &, cVector &);
   void     EvaluateS2(cVector &, cVector &, cVector &);
 
   void     GetDblBounds(double*, double*);
@@ -116,6 +124,9 @@ class cProbSurr : public cProblem
   void     EvaluateLCB(int *, cVector &, cVector &);
   void     EvaluateEI(int *, cVector &, cVector &);
   void     EvaluatePoI(int *, cVector &, cVector &);
+  void     EvaluateVFLCB(int *, cVector &, cVector &);
+  void     EvaluateVFEI(int *, cVector &, cVector &);
+  void     EvaluateVFPoI(int *, cVector &, cVector &);
   void     EvaluateS2(int *, cVector &, cVector &);
 
   void     GetVarBounds(int, double &, double&);
@@ -128,6 +139,9 @@ class cProbSurr : public cProblem
   void     EvaluateLCB(int **, cVector &, cVector &);
   void     EvaluateEI(int **, cVector &, cVector &);
   void     EvaluatePoI(int **, cVector &, cVector &);
+  void     EvaluateVFLCB(int **, cVector &, cVector &);
+  void     EvaluateVFEI(int **, cVector &, cVector &);
+  void     EvaluateVFPoI(int **, cVector &, cVector &);
   void     EvaluateS2(int **, cVector &, cVector &);
 
   void     GetBounds(int, int*, int*);

@@ -92,10 +92,12 @@ vector<double> cLamPlate :: Dims;
 //
 static const bool registeredProb[] =
 {
-  cProblemFactory :: Register("LamPltBuckMOBJ"         , MakeProb<cLamPltBuckMOBJ>         ,".lam"),
-  cProblemFactory :: Register("LamPltLiu2000"          , MakeProb<cLamPltLiu2000>          ,".lam"),
-  cProblemFactory :: Register("LamPltLoadFactor"       , MakeProb<cLamPltLoadFactor>       ,".lam"),
-  cProblemFactory :: Register("LamPltMinLopez2009"     , MakeProb<cLamPltMinLopez2009>     ,".lam")
+  cProblemFactory :: Register("LamPltBuckMOBJ"         , MakeProb<cLamPltBuckMOBJ>              ,".lam"),
+  cProblemFactory :: Register("LamPltLiu2000"          , MakeProb<cLamPltLiu2000>               ,".lam"),
+  cProblemFactory :: Register("LamPltLoadFactor"       , MakeProb<cLamPltLoadFactor>            ,".lam"),
+  cProblemFactory :: Register("LamPltMinLopez2009"     , MakeProb<cLamPltMinLopez2009>          ,".lam"),
+  cProblemFactory :: Register("LamPltMFBuck"           , MakeProb<cSquarePlateMFBuckLam>        ,".lam"),
+  cProblemFactory :: Register("LamPltBuckKeshtegarMF"  , MakeProb<cSquarePlateKeshtegarBuckLam> ,".lam")
 };
 
 // -------------------------------------------------------------------------
@@ -1093,5 +1095,711 @@ void cLamPltMinLopez2009 :: Evaluate(int** algvar, cVector &c, cVector &fobjs)
 
   fobjs[0] = W;
 }
+
+// ========================== cSquarePlateBuckFGM ===========================
+
+cSquarePlateMFBuckLam :: cSquarePlateMFBuckLam(void)
+{
+  NumConstr = 1;
+  NumObj = 1;
+}
+
+// ============================== Evaluate =================================
+
+void cSquarePlateMFBuckLam :: Evaluate(int** algvar, cVector &c, cVector &fobjs)
+{
+    // Decode the variables.
+
+    cMatrix layup;
+    if (!Decode(algvar, layup))
+    {
+      cout << "Decoding process failure." << endl;
+      exit(0);
+    }
+
+    // Evaluate the load factors.
+
+    double lbdbck;
+    Analysis(2, layup, lbdbck);
+
+    // Constraint in the maximum contiguous layers with the same angle.
+
+    int maxcont = 4;        // Max. num. of contiguous layers with same angle
+    int numcont = MaxContLay(layup);
+    c[0] = double(numcont)/double(maxcont) - 1.0;
+
+    // Objective function: maximization of the load factor.
+
+    fobjs[0] = -lbdbck;
+}
+
+// ============================== Evaluate =================================
+
+void cSquarePlateMFBuckLam :: EvaluateLFP(int** algvar, cVector &c, cVector &fobjs)
+{
+    // Decode the variables.
+
+    cMatrix layup;
+    if (!Decode(algvar, layup))
+    {
+      cout << "Decoding process failure." << endl;
+      exit(0);
+    }
+
+    // Evaluate the load factors.
+
+    double lbdbck;
+    Analysis(1, layup, lbdbck);
+
+    // Constraint in the maximum contiguous layers with the same angle.
+
+    int maxcont = 4;        // Max. num. of contiguous layers with same angle
+    int numcont = MaxContLay(layup);
+    c[0] = double(numcont)/double(maxcont) - 1.0;
+
+    // Objective function: maximization of the load factor.
+
+    fobjs[0] = -lbdbck;
+}
+
+// -------------------------------------------------------------------------
+// Protected methods:
+//
+
+// ============================== Analysis =================================
+
+void cSquarePlateMFBuckLam :: Analysis(int f, cMatrix &layup, double &lbdb)
+{
+    int num_thread = 0;
+  #ifdef _OMP_
+    num_thread = omp_get_thread_num( );
+  #endif
+
+    stringstream thread;
+    thread << num_thread;
+
+    string thread_number = thread.str();
+    string cmd  = "del LamSqrPltBuck" + thread_number + ".dat";
+    string cmd2 = "del LamSqrPltBuck" + thread_number + ".pos";
+    string cmd3 = "rm LamSqrPltBuck" + thread_number + ".dat";
+    string cmd4 = "rm LamSqrPltBuck" + thread_number + ".pos";
+
+  #ifdef _WIN32
+    if (system(cmd.c_str()) || system(cmd2.c_str()))
+       cout << "Problem on removing plate.dat and plate.pos files.\n";
+  #else
+    if (system(cmd3.c_str()) || system(cmd4.c_str()))
+       cout << "Problem on removing plate.dat and plate.pos files.\n";
+  #endif
+
+    string begname, endname;
+
+    if (f == 1)
+    {
+        begname = "datbegSqrPltCCLamLF_4x4.dat";
+        endname = "datendSqrPltLamLF_4x4.dat";
+    }
+    else if (f == 2)
+    {
+        begname = "datbegSqrPltCCLamHF.dat";
+        endname = "datendSqrPltLamHF.dat";
+    }
+
+    string datname = "LamSqrPltBuck" + thread_number + ".dat";
+    string posname = "LamSqrPltBuck" + thread_number + ".pos";
+
+
+    #ifdef _WIN32
+      cmd = "type " + begname + " >> " + datname;
+    #else
+      cmd = "cat " + begname + " >> " + datname;
+    #endif
+
+    int status = system(cmd.c_str( ));
+
+    if (status)
+    {
+       cout << "Error in the copy of datbeg file.";
+       exit(EXIT_FAILURE);
+    }
+
+    fstream dat;
+
+    dat.open(datname.c_str( ));
+
+    if (!dat.is_open( ))
+    {
+       cout << "Error opening the dat file for plate analysis." << endl;
+       exit(0);
+    }
+
+    dat.seekp(0,ofstream::end);
+
+    dat << endl << endl << "%SECTION.LAMINATED.SHELL" << endl;
+    dat << "1" << endl;
+    dat << "1 1.0 0.0 0.0 " << layup.NCol( ) << endl;
+
+    for (int i = 0; i < layup.NCol(); i++)
+        dat << "1   0.01    " << layup[1][i] << endl;
+
+    dat << endl;
+
+    dat.close( );
+
+    #ifdef _WIN32
+      cmd = "type " + endname + " >> " + datname;
+    #else
+      cmd = "cat " + endname + " >> " + datname;
+    #endif
+
+    status = system(cmd.c_str( ));
+
+    if (status)
+    {
+       cout << "Error in the copy of datbeg file.";
+       exit(EXIT_FAILURE);
+    }
+
+    // Run the analysis with FAST.
+
+  #ifdef _WIN32
+    cmd = "fast.exe LamSqrPltBuck" + thread_number + " -silent";
+  #else
+    cmd = "./fast LamSqrPltBuck" + thread_number + " -silent";
+  #endif
+
+    status = system(cmd.c_str( ));
+
+    if (status)
+    {
+       cout << "Error in the analysis with fast.";
+       exit(EXIT_FAILURE);
+    }
+
+    // Open the pos file.
+
+    ifstream pos;
+
+    pos.open(posname.c_str( ));
+
+    if (!pos.is_open( ))
+    {
+       cout << "Error opening the pos file for plate analysis." << endl;
+       exit(0);
+    }
+
+    // Find buckling load factor
+
+    string label;
+    double buckfactor = 0;
+    int mode;
+
+    while (pos >> label)
+    {
+           if (label == "%RESULT.CASE.STEP.BUCKLING.FACTOR")
+           {
+              pos >> mode;
+              pos >> buckfactor;
+           }
+     }
+
+     if (buckfactor == 0)
+     {
+        cout << "Convergence not achieved in infill: " << endl;
+     }
+
+     // Push back the new targets Ybuck and Ystren
+     lbdb = buckfactor;
+}
+
+// ============================ Evaluate ==============================
+
+void cSquarePlateMFBuckLam :: EvalExactConstraint(int index, int** algvar, double &c)
+{
+    // Decode the variables.
+
+    cMatrix layup;
+    if (!Decode(algvar, layup))
+    {
+      cout << "Decoding process failure." << endl;
+      exit(0);
+    }
+
+  // Single constraint evaluation.
+    if (index == 0)
+    {
+        int maxcont = 4;        // Max. num. of contiguous layers with same angle
+        int numcont = MaxContLay(layup);
+        c = double(numcont)/double(maxcont) - 1.0;
+    }
+    else{
+        cout << "Definition of an exact constraint missing!";
+        exit(0);
+    }
+}
+
+// ========================= GetApproxConstr ==========================
+
+void cSquarePlateMFBuckLam :: GetApproxConstr(bool *approxc)
+{
+  approxc[0] = 0;
+}
+
+
+
+// ========================== cSquarePlateBuckFGM ===========================
+
+cSquarePlateKeshtegarBuckLam :: cSquarePlateKeshtegarBuckLam(void)
+{
+  NumConstr = 1;
+  NumObj = 1;
+}
+
+// ============================== Evaluate =================================
+
+void cSquarePlateKeshtegarBuckLam :: Evaluate(int** algvar, cVector &c, cVector &fobjs)
+{
+    int tb = MinThk*100; int tu = MaxThk*100; int tMax = 100;
+    //cout << "StartRepair" << endl;
+    RepairAlgorithm(algvar, tb, tu, tMax);
+    //cout << "EndRepair" << endl;
+
+    // Decode the variables.
+
+    cMatrix layup;
+    if (!Decode(algvar, layup))
+    {
+      cout << "Decoding process failure." << endl;
+      exit(0);
+    }
+
+    // layup[0][0] = 0.11; layup[0][1] = 0.07; layup[0][2] = 0.12; layup[0][3] = 0.10; layup[0][4] = 0.10;
+    // layup[0][9] = 0.11; layup[0][8] = 0.07; layup[0][7] = 0.12; layup[0][6] = 0.10; layup[0][5] = 0.10;
+    // layup[1][0] = 35;   layup[1][1] = -15;  layup[1][2] = -47;  layup[1][3] = -38;  layup[1][4] = -2;
+    // layup[1][9] = 35;   layup[1][8] = -15;  layup[1][7] = -47;  layup[1][6] = -38;  layup[1][5] = -2;
+
+    // Evaluate the load factors.
+
+    double lbdbck;
+    Analysis(2, layup, lbdbck);
+
+    // Constraint in the maximum total thickness.
+
+    double MaxThk = 1.0;
+    double thk = 0;
+    for (int i = 0; i < layup.NCol( ); i++) thk += layup[0][i];
+    c[0] = thk/MaxThk - 1.0;
+
+    if (abs(c[0]) > 1e-6)
+    {
+        cout << "c[0] = " << c[0] << endl;
+        cout << "thk = " << thk << endl;
+        exit(0);
+    }
+
+
+    // Objective function: maximization of the load factor.
+
+    fobjs[0] = -lbdbck;
+}
+
+// ============================== Evaluate =================================
+
+void cSquarePlateKeshtegarBuckLam :: EvaluateLFP(int** algvar, cVector &c, cVector &fobjs)
+{
+    int tb = MinThk*100; int tu = MaxThk*100; int tMax = 100;
+    RepairAlgorithm(algvar, tb, tu, tMax);
+
+    // Decode the variables.
+
+    cMatrix layup;
+    if (!Decode(algvar, layup))
+    {
+      cout << "Decoding process failure." << endl;
+      exit(0);
+    }
+
+    // Evaluate the load factors.
+
+    double lbdbck;
+    Analysis(1, layup, lbdbck);
+
+    // Constraint in the maximum total thickness.
+
+    double MaxThk = 1.0;
+    double thk = 0;
+    for (int i = 0; i < layup.NCol( ); i++) thk += layup[0][i];
+    c[0] = thk/MaxThk - 1.0;
+
+    if (abs(c[0]) > 1e-6)
+    {
+        cout << "c[0] = " << c[0] << endl;
+        cout << "thk = " << thk << endl;
+        exit(0);
+    }
+
+    // Objective function: maximization of the load factor.
+
+    fobjs[0] = -lbdbck;
+}
+
+// -------------------------------------------------------------------------
+// Protected methods:
+//
+
+// ========================== RepairAlgorithm ===========================
+
+void cSquarePlateKeshtegarBuckLam :: RepairAlgorithm(int** algvar, int tb, int tu, int tMax)
+{
+    if (LamType == SYMMETRIC)
+    {
+        //cout << "0" << endl;
+        int SizeThk = NumCol;
+        //cout << "0.1" << endl;
+        cVector thk(SizeThk);
+        //cout << "0.2" << endl;
+        for (int i = 0; i < SizeThk; i++) thk[i] = algvar[0][i];
+        //cout << "1" << endl;
+
+        // thk in cm!
+        for (int i = 0; i < SizeThk; i++) thk[i] = thk[i] + tb;
+        //cout << "2" << endl;
+
+        // Algorithm: List of priority
+
+        cVector ListPrior(SizeThk);
+        for (int i = 0; i < SizeThk; i++)
+        {
+            ListPrior[i] = i;
+        }
+
+        //cout << "3" << endl;
+        // Redefine thickness so that sum < tMax
+
+        int Sum = 0;
+        for (int i = 0; i < (SizeThk - 1); i++) Sum += thk[ListPrior[i]];
+
+        thk[ListPrior[SizeThk - 1]] = tMax/2 - Sum;
+
+        //cout << "4" << endl;
+        // Repair so that thickness for each ply is between the desired values (tb < t < tu)
+
+        int id = 1;
+        while (thk[ListPrior[SizeThk - 1]] < tb)
+        {
+            if (thk[ListPrior[SizeThk - 1 - id]] == tb)
+            {
+                id += 1;
+                if (id == SizeThk) id = 1;
+                continue;
+            }
+            thk[ListPrior[SizeThk - 1]] += 1;
+            thk[ListPrior[SizeThk - 1 - id]] -= 1;
+
+            id += 1;
+            if (id == SizeThk) id = 1;
+            continue;
+        }
+
+        //cout << "5" << endl;
+
+        id = 1;
+        while (thk[ListPrior[SizeThk - 1]] > tu)
+        {
+            if (thk[ListPrior[id - 1]] == tu)
+            {
+                id += 1;
+                if (id == SizeThk) id = 1;
+                continue;
+            }
+            thk[ListPrior[SizeThk - 1]] -= 1;
+            thk[ListPrior[id - 1]]     += 1;
+
+            id += 1;
+            if (id == SizeThk) id = 1;
+            continue;
+        }
+
+        //cout << "6" << endl;
+        // Define algvar again
+        for (int i = 0; i < SizeThk; i++) thk[i] = thk[i] - tb;
+
+        for (int i = 0; i < SizeThk; i++)
+        {
+            algvar[0][i]                = thk[i];
+            algvar[0][2*NumCol - i - 1] = thk[i];
+        }
+
+        //cout << "7" << endl;
+    }
+    else
+    {
+        cVector thk(NumCol);
+        for (int i = 0; i < NumCol; i++) thk[i] = algvar[0][i];
+
+        // thk in cm!
+        for (int i = 0; i < NumCol; i++) thk[i] = thk[i] + tb;
+
+        // Algorithm: List of priority
+        int IndMid = NumCol/2;
+
+        cVector ListPrior(NumCol);
+        int Cont1 = 0; int Cont2 = 0;
+        for (int i = 0; i < NumCol; i++)
+        {
+            int r = i%2;
+            if (r == 0)
+            {
+                ListPrior[i] = Cont1; Cont1 += 1;
+            }
+            else
+            {
+                ListPrior[i] = NumCol - Cont2 - 1; Cont2 = Cont2 + 1;
+            }
+        }
+
+        // Redefine thickness so that sum < tMax
+
+        int Sum = 0;
+        for (int i = 0; i < (NumCol - 1); i++) Sum += thk[ListPrior[i]];
+
+        thk[ListPrior[NumCol - 1]] = tMax - Sum;
+
+        // Repair so that thickness for each ply is between the desired values (tb < t < tu)
+
+        int id = 1;
+        while (thk[ListPrior[NumCol - 1]] < tb)
+        {
+            if (thk[ListPrior[NumCol - 1 - id]] == tb)
+            {
+                id += 1;
+                if (id == NumCol) id = 1;
+                continue;
+            }
+            thk[ListPrior[NumCol - 1]] += 1;
+            thk[ListPrior[NumCol - 1 - id]] -= 1;
+
+            id += 1;
+            if (id == NumCol) id = 1;
+            continue;
+        }
+
+
+        id = 1;
+        while (thk[ListPrior[NumCol - 1]] > tu)
+        {
+            if (thk[ListPrior[id - 1]] == tu)
+            {
+                id += 1;
+                if (id == NumCol) id = 1;
+                continue;
+            }
+            thk[ListPrior[NumCol - 1]] -= 1;
+            thk[ListPrior[id - 1]]     += 1;
+
+            id += 1;
+            if (id == NumCol) id = 1;
+            continue;
+        }
+
+        // Define algvar again
+        for (int i = 0; i < NumCol; i++) thk[i] = thk[i] - tb;
+
+        for (int i = 0; i < NumCol; i++) algvar[0][i] = thk[i];
+    }
+}
+
+// ============================== Analysis =================================
+
+void cSquarePlateKeshtegarBuckLam :: Analysis(int f, cMatrix &layup, double &lbdb)
+{
+    int num_thread = 0;
+  #ifdef _OMP_
+    num_thread = omp_get_thread_num( );
+  #endif
+
+    stringstream thread;
+    thread << num_thread;
+
+    string thread_number = thread.str();
+    string cmd  = "del LamSqrPltBuck" + thread_number + ".dat";
+    string cmd2 = "del LamSqrPltBuck" + thread_number + ".pos";
+    string cmd3 = "rm LamSqrPltBuck" + thread_number + ".dat";
+    string cmd4 = "rm LamSqrPltBuck" + thread_number + ".pos";
+
+  #ifdef _WIN32
+    if (system(cmd.c_str()) || system(cmd2.c_str()))
+       cout << "Problem on removing plate.dat and plate.pos files.\n";
+  #else
+    if (system(cmd3.c_str()) || system(cmd4.c_str()))
+       cout << "Problem on removing plate.dat and plate.pos files.\n";
+  #endif
+
+    string begname, endname;
+
+    if (f == 1)
+    {
+        begname = "datbegSqrPltKeshtegarLamLF_4x4.dat";
+        endname = "datendSqrPltKeshtegarLamLF_4x4.dat";
+    }
+    else if (f == 2)
+    {
+        begname = "datbegSqrPltKeshtegarLamHF.dat";
+        endname = "datendSqrPltKeshtegarLamHF.dat";
+    }
+
+    string datname = "LamSqrPltBuck" + thread_number + ".dat";
+    string posname = "LamSqrPltBuck" + thread_number + ".pos";
+
+
+    #ifdef _WIN32
+      cmd = "type " + begname + " >> " + datname;
+    #else
+      cmd = "cat " + begname + " >> " + datname;
+    #endif
+
+    int status = system(cmd.c_str( ));
+
+    if (status)
+    {
+       cout << "Error in the copy of datbeg file.";
+       exit(EXIT_FAILURE);
+    }
+
+    fstream dat;
+
+    dat.open(datname.c_str( ));
+
+    if (!dat.is_open( ))
+    {
+       cout << "Error opening the dat file for plate analysis." << endl;
+       exit(0);
+    }
+
+    dat.seekp(0,ofstream::end);
+
+    dat << endl << endl << "%SECTION.LAMINATED.SHELL" << endl;
+    dat << "1" << endl;
+    dat << "1 1.0 0.0 0.0 " << layup.NCol( ) << endl;
+
+    for (int i = 0; i < layup.NCol(); i++)
+        dat << "1   " << layup[0][i] << "    " << layup[1][i] << endl;
+
+    dat << endl;
+
+    dat.close( );
+
+    #ifdef _WIN32
+      cmd = "type " + endname + " >> " + datname;
+    #else
+      cmd = "cat " + endname + " >> " + datname;
+    #endif
+
+    status = system(cmd.c_str( ));
+
+    if (status)
+    {
+       cout << "Error in the copy of datbeg file.";
+       exit(EXIT_FAILURE);
+    }
+
+    // Run the analysis with FAST.
+
+  #ifdef _WIN32
+    cmd = "fast.exe LamSqrPltBuck" + thread_number + " -silent";
+  #else
+    cmd = "./fast LamSqrPltBuck" + thread_number + " -silent";
+  #endif
+
+    status = system(cmd.c_str( ));
+
+    if (status)
+    {
+       cout << "Error in the analysis with fast.";
+       exit(EXIT_FAILURE);
+    }
+
+    // Open the pos file.
+
+    ifstream pos;
+
+    pos.open(posname.c_str( ));
+
+    if (!pos.is_open( ))
+    {
+       cout << "Error opening the pos file for plate analysis." << endl;
+       exit(0);
+    }
+
+    // Find buckling load factor
+
+    string label;
+    double buckfactor = 0;
+    int mode;
+
+    while (pos >> label)
+    {
+           if (label == "%RESULT.CASE.STEP.BUCKLING.FACTOR")
+           {
+              pos >> mode;
+              pos >> buckfactor;
+           }
+     }
+
+     if (buckfactor == 0)
+     {
+        cout << "Convergence not achieved in infill: " << endl;
+     }
+
+     // Push back the new targets Ybuck and Ystren
+     lbdb = buckfactor;
+}
+
+// ============================ Evaluate ==============================
+
+void cSquarePlateKeshtegarBuckLam :: EvalExactConstraint(int index, int** algvar, double &c)
+{
+    int tb = MinThk*100; int tu = MaxThk*100; int tMax = 100;
+    RepairAlgorithm(algvar, tb, tu, tMax);
+
+    // Decode the variables.
+
+    cMatrix layup;
+    if (!Decode(algvar, layup))
+    {
+      cout << "Decoding process failure." << endl;
+      exit(0);
+    }
+
+  // Single constraint evaluation.
+    if (index == 0)
+    {
+        // Constraint in the maximum total thickness.
+
+        double MaxThk = 1.0;
+        double thk = 0;
+        for (int i = 0; i < layup.NCol( ); i++) thk += layup[0][i];
+        c = thk/MaxThk - 1.0;
+
+        if (abs(c) > 1e-6)
+        {
+            cout << "c = " << c << endl;
+            cout << "thk = " << thk << endl;
+            exit(0);
+        }
+    }
+    else{
+        cout << "Definition of an exact constraint missing!";
+        exit(0);
+    }
+}
+
+// ========================= GetApproxConstr ==========================
+
+void cSquarePlateKeshtegarBuckLam :: GetApproxConstr(bool *approxc)
+{
+  approxc[0] = 0;
+}
+
 
 // ======================================================= End of file =====

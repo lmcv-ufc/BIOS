@@ -41,7 +41,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
-//#include <bits/stdc++.h>
+#include <bits/stdc++.h>
 
 #include "vec.h"
 #include "mat.h"
@@ -265,7 +265,7 @@ void cSamp :: CalcSampHammersley ( int m, int n , vector<cVector>  &sx)
         xs[j] = r[j];
       }
 
-      xs.Print();
+      //xs.Print();
       sx.push_back(xs);
    }
 }
@@ -895,6 +895,9 @@ int cSamp :: i4_uniform_ab ( int a, int b, int &seed )
   int k;
   float r;
   int value;
+
+  if ( seed == 0)
+      seed = rand( )%100+ 1;
 
   if ( seed == 0 )
   {
@@ -15698,7 +15701,7 @@ int cSamp :: get_seed ( )
 //
 //  Never use a seed of 0.
 //
-  if ( seed == 0 )
+  if ( seed <= 1e-10 )
   {
     seed = 1;
   }

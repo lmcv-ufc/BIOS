@@ -269,6 +269,8 @@ class cOptSolution
           cVector        Constr;        // Constraint values
           cVector        Fobjs;         // Objective functions vector
 
+          bool           IsSampHF;      // For multi-fidelity problems
+
   virtual cOptSolution*  NewObj(void) = 0;
 
  public:
@@ -287,6 +289,7 @@ class cOptSolution
           double        GetFitFunc(void)   { return FitFuncVal; }
           double        GetNormConst(void){ return NormConst; }
           double        GetFeasibleConst(void){ return FeasibleConst; }
+          bool          GetFidelity(void){ return IsSampHF; }
   virtual int **        GetVar(void) { };
   virtual void          GetVar(cVector &) { };
   virtual cVector       GetVec(void) { };
@@ -307,6 +310,7 @@ class cOptSolution
   virtual void          Init(const sInpSol&){ };
   virtual void          Init(const cVector&){ };
   virtual void          Evaluate(void) = 0;
+  virtual void          EvaluateLFP(void) = 0;
   virtual void          Print(void) = 0;
   virtual void          Write(std::ostream&) = 0;
   virtual void          Copy(cOptSolution*) = 0;

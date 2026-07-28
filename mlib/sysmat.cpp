@@ -1,7 +1,7 @@
 // -------------------------------------------------------------------------
 // sysmat.cpp - Implementation of class to handle large sparse matrices.
 // -------------------------------------------------------------------------
-// Copyright (c) 2015 LMCV/UFC
+// Copyright (c) 2021 LMCV/UFC
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without 

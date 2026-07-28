@@ -65,8 +65,6 @@ using namespace std;
 #include "sel.h"
 #include "penalty.h"
 #include "problem.h"
-#include "saokrg.h"
-#include "grego.h"
 #include "stdga.h"
 #include "lamga.h"
 #include "modnsgaII.h"
@@ -76,8 +74,10 @@ using namespace std;
 #include "stdabc.h"
 #include "stdais.h"
 #include "stdde.h"
-#include "kitayamasao.h"
 #include "saorbf.h"
+#include "saokrg.h"
+#include "saocokrg.h"
+#include "saohierkrg.h"
 #include "rs.h"
 #include "vec.h"
 #include "mat.h"
@@ -129,6 +129,10 @@ void cOptAlgReadEntry :: Read(istream &in)
     alg = new cStandardDE( );
   else if (string(label)=="SAOKRG" || string(label)=="saokrg")
     alg = new cSAOKRG( );
+  else if (string(label)=="SAOCOKRG" || string(label)=="saocokrg")
+    alg = new cSAOCOKRG( );
+  else if (string(label)=="SAOHIERKRG" || string(label)=="SAOHKRG" || string(label)=="saohierkrg")
+    alg = new cSAOHIERKRG( );
   else if (string(label)=="SAORBF" || string(label)=="saobrf")
     alg = new cSAORBF( );
   else if (string(label)=="RandSearch" || string(label)=="rs")
@@ -173,6 +177,17 @@ void cOptAlgorithm :: ReadTolViol(istream &in)
 void cOptAlgorithm :: ReadTolSucRate(istream &in)
 {
   if (!(in >> TolSucRate))
+  {
+    cout << "Error in the input of the success optimization tolerance rate." << endl;
+    exit(0);
+  }
+}
+
+// ============================== ReadTolSucRate ===========================
+
+void cOptAlgorithm :: ReadTolSuc(istream &in)
+{
+  if (!(in >> TolSuc))
   {
     cout << "Error in the input of the success optimization tolerance." << endl;
     exit(0);
@@ -546,6 +561,7 @@ void cOptAlgorithm :: LoadReadFunc(cInpMap &im)
   im.Insert("MUTATION.PROBABILITY",       makeReadObj(cOptAlgorithm,ReadMutProb));
   im.Insert("MUTATION.RANGE",             makeReadObj(cOptAlgorithm,ReadMutRange));
   im.Insert("CONSTRAINT.TOLERANCE",       makeReadObj(cOptAlgorithm,ReadTolViol));
+  im.Insert("SUCCESS.TOLERANCE",          makeReadObj(cOptAlgorithm,ReadTolSuc));
   im.Insert("SUCCESS.RATE.TOLERANCE",     makeReadObj(cOptAlgorithm,ReadTolSucRate));
   im.Insert("MAXIMUM.THREAD.NUMBER",      makeReadObj(cOptAlgorithm,ReadMaxThread));
   im.Insert("SEED",                       makeReadObj(cOptAlgorithm,ReadSeed));
@@ -612,6 +628,13 @@ cOptAlgorithm* cOptAlgorithm :: CreateOptAlg(eOptAlgType type, cProblem* prob)
           alg = new cSAOKRG( );
       break;
 
+      case (SAOCOKRG):
+          alg = new cSAOCOKRG( );
+
+      case (SAOHKRG):
+          alg = new cSAOHIERKRG( );
+      break;
+      
 //      case (KITSAO):
 //'          alg = new cKitayamaSAO( );
 //      break;
@@ -656,6 +679,7 @@ cOptAlgorithm :: cOptAlgorithm(void)
   OptNum       = 1;
   TolViol      = 1.0e-3;
   TolSucRate   = 1.0e-4;
+  TolSuc       = INT_MIN;
   PopSize      = 100;
   CrossType    = LINEAR_COMBINATION;
   cont         = 10;
@@ -728,9 +752,9 @@ void cOptAlgorithm :: Init(void)
       MBestGen  = new double [MaxGen];
       best      = new cSolGroup(OptNum,Prob);
 
-  // Initialize mean best solutions
+      // Initialize mean best solutions
 
-  for(int gen = 0; gen < MaxGen; gen++) MBestGen[gen] = 0;
+      for(int gen = 0; gen < MaxGen; gen++) MBestGen[gen] = 0;
   }
 }
 
@@ -812,6 +836,47 @@ void cOptAlgorithm :: UpdatePostVar(int gen, int opt, double &lb, cGroup *mg)
   }
 }
 
+// =============================== UpdateTimeVar ===========================
+
+void cOptAlgorithm :: UpdateTimeVar(int opt, int gen, int nh, int nl, double tinfill, double teval, double tbuild)
+{
+    nHigFidSamp[gen] = nh;
+    nLowFidSamp[gen] = nl;
+
+    Tinf[gen]   = tinfill;
+    Teval[gen]  = teval;
+    Tbuild[gen] = tbuild;
+
+    GenStop = gen;
+}
+
+// =============================== PrintPostVar ============================
+
+void cOptAlgorithm :: PrintTimeVar( )
+{
+  if (!out) return;
+
+  cout << endl;
+
+  *out << "\n%TIME.SPENT.PHASES\n";
+  *out << "'nh'    'nl'    'INFILL'    'EVAL'    'BUILD'\n";
+
+  for (int i = 0; i < (GenStop + 1); i++)
+    *out << nHigFidSamp[i] << "    " << nLowFidSamp[i] << "    " << Tinf[i] << "    " << Teval[i] << "    " << Tbuild[i] << endl;
+
+  cout << endl;
+
+  /**out << "\n%HYPERPARAMETES.ITERATIONS\n";
+
+  for (int i = 0; i < ThetaIt.NRow( ); i++)
+  {
+      for (int j = 0; j < ThetaIt.NCol( ); j ++)
+          *out << ThetaIt[i][j] << "   ";
+      *out << endl;
+  }*/
+
+}
+
 // =============================== OptStopCrit =============================
 
 bool cOptAlgorithm :: OptStopCrit(int gen, int opt, double &lb, cGroup *mg)
@@ -830,7 +895,6 @@ bool cOptAlgorithm :: OptStopCrit(int gen, int opt, double &lb, cGroup *mg)
 
   if (StallGenCount >= StallGen)
   {
-      //cout << "Stall gen" << endl;
     StopCrit = true;
   }
 
@@ -838,8 +902,20 @@ bool cOptAlgorithm :: OptStopCrit(int gen, int opt, double &lb, cGroup *mg)
 
   if (MinObjFlag)
   {
-    if (fabs(MinObjFunc - lb) <= TolSucRate)
-      StopCrit = true;
+      if (MinObjFunc != 0.0)
+      {
+          if (fabs((MinObjFunc - lb)/MinObjFunc) <= TolSucRate || lb <= TolSuc)
+          {
+              StopCrit = true;
+          }
+      }
+      else
+      {
+          if (lb <= TolSuc)
+          {
+              StopCrit = true;
+          }
+      }
   }
 
   // Fill the incomplete output data with the last values obtained

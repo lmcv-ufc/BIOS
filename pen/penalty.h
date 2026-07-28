@@ -118,6 +118,8 @@ class cPenalty
           ePenType  GetType (void) { return Type; }
   virtual void      EvalPenObjFunc(cGroup *, double) = 0;
   virtual void      LoadReadFunc(cInpMap&) { }
+  virtual void      SetFactor(double pf) { };
+  virtual double    GetFactor( ) {return 0;}
          
 };
 
@@ -132,6 +134,7 @@ class cPenStatic : public cPenalty
  public:
           void  ReadFactor(std::istream&);
           void  SetFactor(double pf)  { K  = pf; }
+          double  GetFactor(void) {return K;}
 
                 cPenStatic(void);
   virtual      ~cPenStatic(void);

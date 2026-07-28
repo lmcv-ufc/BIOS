@@ -70,7 +70,7 @@ using namespace std;
 #include "utl.h"
 
 typedef long double tClock;
-const string Version("4.0.0 - Feb/2022");
+const string Version("1.0.0 - Aug/2021");
 
 // -------------------------------------------------------------------------
 // Global variables:
@@ -206,9 +206,10 @@ int main(int argc, char **argv)
 
   if (Feedback)
     cout << endl << "\tProcessing the Optimization Problem ..........." << endl;
+
   alg->SetOutStream(out);
   alg->SetFeedback(Feedback);
-  alg->Init( );               //Method defined in OptAlg 
+  alg->Init( );               //Method defined in OptAlg
   alg->Solver( );             //Virtual method defined in OptAlg. This method calls Evaluate( )]
   alg->PostProcessing( );     //Defined in OptAlg
 

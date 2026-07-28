@@ -185,6 +185,7 @@ class cHart3C : public cBenchContinuous
          cHart3C(void);
         ~cHart3C(void){}
   void Evaluate(cVector & ,cVector &, cVector &);
+  void EvaluateLFP(cVector & ,cVector &, cVector &);
 };
 
 //--------------------------------------------------------------------------
@@ -528,6 +529,195 @@ class cBeamD : public cBenchDiscrete
   void  EvalExactConstraint(int, int *, double &);
   void  GetApproxObj(bool*o) { o[0] = 1; }
   void  GetApproxConstr(bool*c);
+};
+
+// ------------------------------------------------------------------------
+// Definition of ForresterAC class:
+//
+// Optimization problem Forresrer. This problem deals with the optimization
+// of a one-dimensional function [1], used for example purposes. In this
+// class, the problem is solved using continuous variables.
+//
+// [1] FORRESTER, Alexander et al. Engineering design via surrogate modelling: a
+//     practical guide. John Wiley & Sons, 2008.
+//
+
+class cForresterAC : public cBenchContinuous
+{
+  public:
+         cForresterAC(void);
+        ~cForresterAC(void){}
+  void Evaluate(cVector & ,cVector &, cVector &);
+  void EvaluateLFP(cVector & ,cVector &, cVector &);
+};
+
+// ------------------------------------------------------------------------
+// Definition of ForresterBC class:
+//
+// Optimization problem Forresrer. This problem deals with the optimization
+// of a one-dimensional function [1], used for example purposes. In this
+// class, the problem is solved using continuous variables.
+//
+// [1] FORRESTER, Alexander et al. Engineering design via surrogate modelling: a
+//     practical guide. John Wiley & Sons, 2008.
+//
+
+class cForresterBC : public cBenchContinuous
+{
+  public:
+         cForresterBC(void);
+        ~cForresterBC(void){}
+  void Evaluate(cVector & ,cVector &, cVector &);
+  void EvaluateLFP(cVector & ,cVector &, cVector &);
+};
+
+// ------------------------------------------------------------------------
+// Definition of ForresterCC class:
+//
+// Optimization problem Forresrer. This problem deals with the optimization
+// of a one-dimensional function [1], used for example purposes. In this
+// class, the problem is solved using continuous variables.
+//
+// [1] FORRESTER, Alexander et al. Engineering design via surrogate modelling: a
+//     practical guide. John Wiley & Sons, 2008.
+//
+
+class cForresterCC : public cBenchContinuous
+{
+  public:
+         cForresterCC(void);
+        ~cForresterCC(void){}
+  void Evaluate(cVector & ,cVector &, cVector &);
+  void EvaluateLFP(cVector & ,cVector &, cVector &);
+};
+
+// ------------------------------------------------------------------------
+// Definition of ForresterCC class:
+//
+// Optimization problem Forresrer. This problem deals with the optimization
+// of a one-dimensional function [1], used for example purposes. In this
+// class, the problem is solved using continuous variables.
+//
+// [1] FORRESTER, Alexander et al. Engineering design via surrogate modelling: a
+//     practical guide. John Wiley & Sons, 2008.
+//
+
+class cForresterDC : public cBenchContinuous
+{
+  public:
+         cForresterDC(void);
+        ~cForresterDC(void){}
+  void Evaluate(cVector & ,cVector &, cVector &);
+  void EvaluateLFP(cVector & ,cVector &, cVector &);
+};
+
+// ------------------------------------------------------------------------
+// Definition of Ackley5 class:
+//
+// Optimization problem Ackley5. This problem is a well-known d-dimensional
+// unconstrained optimization problem function [1]. In this class, the problem
+// is solved using continuous variables and d = 5.
+//
+// [1] ZHANG, Y. et al. Variable-fidelity expected improvement method for
+//    efficient global optimization of expensive functions. Structural and
+//    Multidisciplinary Optimization, 2018.
+//
+
+class cAckley5C : public cBenchContinuous
+{
+  public:
+         cAckley5C(void);
+        ~cAckley5C(void){}
+  void Evaluate(cVector & ,cVector &, cVector &);
+  void EvaluateLFP(cVector & ,cVector &, cVector &);
+};
+
+// ------------------------------------------------------------------------
+// Definition of BeamTimoshenko class:
+//
+
+class cBeamTimoshenkoC : public cBenchContinuous
+{
+  public:
+         cBeamTimoshenkoC(void);
+        ~cBeamTimoshenkoC(void){}
+  void   Evaluate(cVector & ,cVector &, cVector &);
+  void   EvaluateLFP(cVector & ,cVector &, cVector &);
+  void   EvalExactConstraint(int, cVector&, double &);
+  void   GetApproxObj(bool*o) { o[0] = 1; }
+  void   GetApproxConstr(bool*);
+};
+
+// ------------------------------------------------------------------------
+// Definition of BeamTimoshenko class:
+//
+
+class cFGBeam : public cBenchContinuous
+{
+  public:
+         cFGBeam(void);
+        ~cFGBeam(void){}
+  void   Evaluate(cVector & ,cVector &, cVector &);
+  void   EvaluateLFP(cVector & ,cVector &, cVector &);
+  void   EvalExactConstraint(int, cVector&, double &);
+  void   GetApproxObj(bool*o) { o[0] = 1; }
+  void   GetApproxConstr(bool*);
+  void   GaussPts1D(int,cVector&,cVector&);
+};
+
+// ------------------------------------------------------------------------
+// Definition of ColumnBucklingRitz class:
+//
+
+class cColumnBucklingRitzC : public cBenchContinuous
+{
+  protected:
+  void   SolvePolynome3(double, double, double, double, cVector&);
+  double GetInertiaX(double, double, double, double);
+  double EvalFiniteDifferences(double, double, double, double, double);
+
+  public:
+         cColumnBucklingRitzC(void);
+        ~cColumnBucklingRitzC(void){}
+  void Evaluate(cVector & ,cVector &, cVector &);
+  void EvaluateLFP(cVector & ,cVector &, cVector &);
+  void  EvalExactConstraint(int, cVector&, double &);
+  void  GetApproxObj(bool*o) { o[0] = 1; }
+  void  GetApproxConstr(bool*c) { c[0] = 0; c[1] = 0; }
+};
+
+//--------------------------------------------------------------------------
+// Definition of Gano2C class:
+//
+
+class cGano2C : public cBenchContinuous
+{
+  public:
+         cGano2C(void);
+        ~cGano2C(void){}
+  void  Evaluate(cVector & ,cVector &, cVector &);
+  void  EvaluateLFP(cVector & ,cVector &, cVector &);
+  void  EvalExactFobj(cVector&,double &);
+  void  EvalExactConstraint(int, cVector&, double &);
+  void  GetApproxObj(bool*o) { o[0] = 1; }
+  void  GetApproxConstr(bool*);
+};
+
+//--------------------------------------------------------------------------
+// Definition of G82C class:
+//
+
+class cG82C : public cBenchContinuous
+{
+  public:
+         cG82C(void);
+        ~cG82C(void){}
+  void  Evaluate(cVector & ,cVector &, cVector &);
+  void  EvaluateLFP(cVector & ,cVector &, cVector &);
+  void  EvalExactFobj(cVector&,double &);
+  void  EvalExactConstraint(int, cVector&, double &);
+  void  GetApproxObj(bool*o) { o[0] = 1; }
+  void  GetApproxConstr(bool*);
 };
 
 // ------------------------------------------------------------------------
