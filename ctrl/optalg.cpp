@@ -47,6 +47,7 @@
 //               Added ReadSampType method from SAO class.
 // -------------------------------------------------------------------------
 
+#include <climits>
 #include <cmath>
 #include <iostream>
 #include <fstream>

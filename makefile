@@ -56,9 +56,12 @@ CTRLMOD	=		\
 	sao		\
 	saorbf		\
 	saokrg		\
+	saocokrg    \
+	saohierkrg  \
 	modnsgaII	\
 	modlamnsgaII	\
 	stdde		\
+	mfsao      \
 	rs
 
 	#kitayamasao	\
@@ -90,6 +93,8 @@ PENMOD	=		\
 SURMOD	=		\
 	krg		\
 	rbf		\
+	cokrg \
+	hierkrg \
 	surr 		\
 	samp		\
 	problike	
